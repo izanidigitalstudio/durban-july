@@ -1,0 +1,62 @@
+export const Colors = {
+  gold: '#C9A84C',
+  goldLight: '#E8D5A0',
+  goldDark: '#9E8230',
+  black: '#0A0A0A',
+  charcoal: '#1A1A1A',
+  darkGray: '#2A2A2A',
+  mediumGray: '#4A4A4A',
+  lightGray: '#8A8A8A',
+  paleGray: '#F5F5F0',
+  white: '#FFFFFF',
+  cream: '#FFF9E8',
+  green: '#1B6B3E',
+  greenLight: '#2A8B55',
+  greenDark: '#0E3D22',
+  red: '#C0392B',
+  burgundy: '#6B1D3A',
+  accent: '#C9A84C',
+  background: '#0B0B0F',
+  surface: '#14141A',
+  card: '#1C1C24',
+  cardBorder: '#2A2A35',
+  text: '#FFFFFF',
+  textSecondary: '#9A9AAA',
+  textMuted: '#555565',
+  overlay: 'rgba(0,0,0,0.7)',
+  gradientStart: '#1B6B3E',
+  gradientEnd: '#0E3D22',
+  success: '#2ECC71',
+  warning: '#F39C12',
+};
+
+export const Spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+  xxxxl: 40,
+};
+
+export const FontSizes = {
+  xs: 11,
+  sm: 13,
+  md: 15,
+  lg: 17,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+  hero: 40,
+};
+
+export const BorderRadius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 28,
+  full: 999,
+};
