@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 
 const countryAllurePortrait = require('../assets/durban-july-2026-country-allure-portrait.jpg');
+const vipLogo = require('../assets/vip-favicon.png');
 
 type Props = {
   onGuest: () => void;
@@ -74,9 +75,10 @@ export default function WelcomeScreen({ onGuest, navigation }: Props) {
         >
           {/* Logo */}
           <View style={[styles.logoArea, isCompact && styles.compactLogoArea]}>
-            <View style={[styles.logoBadge, isCompact && styles.compactLogoBadge]}>
-              <Ionicons name="trophy" size={isCompact ? 23 : 28} color={Colors.gold} />
-            </View>
+            <Image
+              source={vipLogo}
+              style={[styles.vipLogo, isCompact && styles.compactVipLogo]}
+            />
           </View>
 
           {/* Bottom Content */}
@@ -154,13 +156,8 @@ const styles = StyleSheet.create({
   compactContent: { minHeight: '100%' },
   logoArea: { alignItems: 'center', paddingTop: Spacing.xxxl },
   compactLogoArea: { paddingTop: Spacing.md },
-  logoBadge: {
-    width: 60, height: 60, borderRadius: 30,
-    backgroundColor: Colors.surface,
-    borderWidth: 2, borderColor: Colors.gold,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  compactLogoBadge: { width: 50, height: 50, borderRadius: 25 },
+  vipLogo: { width: 84, height: 84, resizeMode: 'contain' },
+  compactVipLogo: { width: 66, height: 66 },
   bottomArea: { paddingHorizontal: Spacing.xxl, paddingBottom: Spacing.xl },
   compactBottomArea: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm },
   theme: {

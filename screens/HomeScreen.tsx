@@ -10,6 +10,7 @@ import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { marquees, events, accommodation } from '../lib/data';
 
 const countryAllureHero = require('../assets/durban-july-2026-country-allure.jpg');
+const vipLogo = require('../assets/vip-favicon.png');
 
 const { width } = Dimensions.get('window');
 
@@ -73,8 +74,7 @@ export default function HomeScreen({ navigation }: any) {
           />
           <SafeAreaView edges={['top']} style={styles.heroContent}>
             <View style={styles.logoRow}>
-              <Text style={styles.logoText}>DURBAN JULY</Text>
-              <Text style={styles.logoYear}>2026</Text>
+              <Image source={vipLogo} style={styles.vipLogo} />
             </View>
           </SafeAreaView>
           <View style={styles.heroBottom}>
@@ -242,9 +242,8 @@ const styles = StyleSheet.create({
   },
   heroGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 350 },
   heroContent: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  logoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingTop: Spacing.md, gap: Spacing.sm },
-  logoText: { fontSize: FontSizes.lg, fontWeight: '800', color: Colors.white, letterSpacing: 4 },
-  logoYear: { fontSize: FontSizes.lg, fontWeight: '800', color: Colors.gold, letterSpacing: 2 },
+  logoRow: { alignItems: 'center', justifyContent: 'center', paddingTop: Spacing.sm },
+  vipLogo: { width: 64, height: 64, resizeMode: 'contain' },
   heroBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: Spacing.xl },
   heroTheme: { fontSize: FontSizes.sm, color: Colors.gold, fontStyle: 'italic', letterSpacing: 2, marginBottom: Spacing.xs },
   heroTitle: { fontSize: FontSizes.hero, fontWeight: '800', color: Colors.white, lineHeight: 44, marginBottom: Spacing.md },
