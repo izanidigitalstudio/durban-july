@@ -1,19 +1,18 @@
 import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Dimensions, Alert,
+  Image, Alert, Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppData } from '../lib/appState';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { marquees, accommodation } from '../lib/data';
 
-const { width } = Dimensions.get('window');
-
 export default function DetailScreen({ route, navigation }: any) {
   const { type, id } = route.params;
+  const insets = useSafeAreaInsets();
   const { activeEvents, scheduleIds: savedEventIds, toggleEvent } = useAppData();
   const isSaved = type === 'event' && savedEventIds.includes(id);
 
@@ -41,8 +40,12 @@ export default function DetailScreen({ route, navigation }: any) {
   const isAccom = type === 'accommodation';
 
   return (
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
+      <ScrollView
+        style={[styles.scrollView, Platform.OS === 'web' && styles.webScrollView]}
+        contentContainerStyle={{ paddingBottom: 112 + insets.bottom }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Hero */}
         <View style={styles.heroContainer}>
           <Image source={{ uri: item.image }} style={styles.heroImage} />
@@ -152,7 +155,6 @@ export default function DetailScreen({ route, navigation }: any) {
           </View>
         )}
 
-        <View style={{ height: 120 }} />
       </ScrollView>
 
       {/* Bottom CTA */}
@@ -195,7 +197,10 @@ export default function DetailScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1, minHeight: 0, overflow: 'hidden', backgroundColor: Colors.background },
+  webContainer: { height: '100dvh', maxHeight: '100dvh' } as any,
+  scrollView: { flex: 1, minHeight: 0 },
+  webScrollView: { height: '100dvh', maxHeight: '100dvh' } as any,
   errorText: { color: Colors.white, fontSize: FontSizes.lg, padding: Spacing.xl },
   heroContainer: { height: 350, position: 'relative' },
   heroImage: { width: '100%', height: '100%' },

@@ -7,44 +7,39 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
+import { useCatalogueColumns } from '../lib/responsive';
 import { transport, conciergeServices, TransportItem, ConciergeService } from '../lib/data';
 
 type Tab = 'transport' | 'concierge';
 
 export default function ServicesScreen({ navigation }: any) {
   const [activeTab, setActiveTab] = useState<Tab>('transport');
+  const numColumns = useCatalogueColumns();
 
   const renderTransport = ({ item }: { item: TransportItem }) => (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { flex: 1 / numColumns }]}
       onPress={() => navigation.navigate('Inquiry', { type: 'transport', id: item.id, name: item.name })}
       activeOpacity={0.85}
     >
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
-      <View style={styles.transportBadge}>
-        <Ionicons
-          name={item.type === 'Shuttle' ? 'bus-outline' : item.type === 'Chauffeur' ? 'car-sport-outline' : item.type === 'Helicopter' ? 'airplane-outline' : 'speedometer-outline'}
-          size={14}
-          color={Colors.gold}
-        />
-        <Text style={styles.transportBadgeText}>{item.type}</Text>
+      <View style={styles.cardImageContainer}>
+        <Image source={{ uri: item.image }} style={styles.cardImage} />
+        <View style={styles.transportBadge}>
+          <Ionicons
+            name={item.type === 'Shuttle' ? 'bus-outline' : item.type === 'Chauffeur' ? 'car-sport-outline' : item.type === 'Helicopter' ? 'airplane-outline' : 'speedometer-outline'}
+            size={10}
+            color={Colors.gold}
+          />
+          <Text style={styles.transportBadgeText}>{item.type}</Text>
+        </View>
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.cardName}>{item.name}</Text>
-        <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
-        <View style={styles.featuresList}>
-          {item.features.slice(0, 3).map((f, i) => (
-            <View key={i} style={styles.featureRow}>
-              <Ionicons name="checkmark-circle" size={14} color={Colors.green} />
-              <Text style={styles.featureText}>{f}</Text>
-            </View>
-          ))}
-        </View>
+        <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
         <View style={styles.cardFooter}>
-          <Text style={styles.cardPrice}>{item.price}</Text>
+          <Text style={styles.cardPrice}>{item.price.split(' ')[0]}</Text>
           <View style={styles.inquireBtn}>
             <Text style={styles.inquireBtnText}>Enquire</Text>
-            <Ionicons name="chevron-forward" size={14} color={Colors.gold} />
+            <Ionicons name="chevron-forward" size={10} color={Colors.gold} />
           </View>
         </View>
       </View>
@@ -53,30 +48,23 @@ export default function ServicesScreen({ navigation }: any) {
 
   const renderConcierge = ({ item }: { item: ConciergeService }) => (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { flex: 1 / numColumns }]}
       onPress={() => navigation.navigate('Inquiry', { type: 'concierge', id: item.id, name: item.name })}
       activeOpacity={0.85}
     >
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
-      <View style={styles.conciergeBadge}>
-        <Text style={styles.conciergeBadgeText}>{item.category}</Text>
+      <View style={styles.cardImageContainer}>
+        <Image source={{ uri: item.image }} style={styles.cardImage} />
+        <View style={styles.conciergeBadge}>
+          <Text style={styles.conciergeBadgeText}>{item.category}</Text>
+        </View>
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.cardName}>{item.name}</Text>
-        <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
-        <View style={styles.featuresList}>
-          {item.features.slice(0, 3).map((f, i) => (
-            <View key={i} style={styles.featureRow}>
-              <Ionicons name="checkmark-circle" size={14} color={Colors.green} />
-              <Text style={styles.featureText}>{f}</Text>
-            </View>
-          ))}
-        </View>
+        <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
         <View style={styles.cardFooter}>
-          <Text style={styles.cardPrice}>{item.price}</Text>
+          <Text style={styles.cardPrice}>{item.price.split(' ')[0]}</Text>
           <View style={styles.inquireBtn}>
             <Text style={styles.inquireBtnText}>Enquire</Text>
-            <Ionicons name="chevron-forward" size={14} color={Colors.gold} />
+            <Ionicons name="chevron-forward" size={10} color={Colors.gold} />
           </View>
         </View>
       </View>
@@ -114,17 +102,23 @@ export default function ServicesScreen({ navigation }: any) {
       </SafeAreaView>
       {activeTab === 'transport' ? (
         <FlatList
+          key={`transport-${numColumns}`}
           data={transport}
           keyExtractor={(item) => item.id}
           renderItem={renderTransport}
+          numColumns={numColumns}
+          columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
         />
       ) : (
         <FlatList
+          key={`concierge-${numColumns}`}
           data={conciergeServices}
           keyExtractor={(item) => item.id}
           renderItem={renderConcierge}
+          numColumns={numColumns}
+          columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
         />
@@ -159,34 +153,39 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: Colors.card },
   tabText: { fontSize: FontSizes.md, color: Colors.textSecondary, fontWeight: '600' },
   tabTextActive: { color: Colors.gold },
-  list: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
+  list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
+  columnWrapper: { justifyContent: 'space-between', paddingHorizontal: 2 },
   card: {
-    borderRadius: BorderRadius.lg, overflow: 'hidden',
-    marginBottom: Spacing.lg, backgroundColor: Colors.card,
-    borderWidth: 1, borderColor: Colors.cardBorder,
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    margin: 6,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
   },
-  cardImage: { width: '100%', height: 170 },
+  cardImageContainer: {
+    position: 'relative',
+    height: 120,
+    width: '100%',
+  },
+  cardImage: { width: '100%', height: '100%' },
   transportBadge: {
-    position: 'absolute', top: Spacing.md, left: Spacing.md,
+    position: 'absolute', top: Spacing.xs, left: Spacing.xs,
     backgroundColor: Colors.background + 'EE', borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md, paddingVertical: 4,
+    paddingHorizontal: Spacing.sm, paddingVertical: 2,
     flexDirection: 'row', alignItems: 'center', gap: 4,
   },
-  transportBadgeText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.gold },
+  transportBadgeText: { fontSize: 10, fontWeight: '700', color: Colors.gold },
   conciergeBadge: {
-    position: 'absolute', top: Spacing.md, right: Spacing.md,
+    position: 'absolute', top: Spacing.xs, right: Spacing.xs,
     backgroundColor: Colors.burgundy, borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md, paddingVertical: 4,
+    paddingHorizontal: Spacing.sm, paddingVertical: 2,
   },
-  conciergeBadgeText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.white },
-  cardContent: { padding: Spacing.lg },
-  cardName: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white, marginBottom: Spacing.xs },
-  cardDesc: { fontSize: FontSizes.sm, color: Colors.textSecondary, lineHeight: 20, marginBottom: Spacing.md },
-  featuresList: { marginBottom: Spacing.md, gap: Spacing.xs },
-  featureRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  featureText: { fontSize: FontSizes.sm, color: Colors.textSecondary },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardPrice: { fontSize: FontSizes.lg, fontWeight: '800', color: Colors.gold },
-  inquireBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  inquireBtnText: { fontSize: FontSizes.sm, color: Colors.gold, fontWeight: '600' },
+  conciergeBadgeText: { fontSize: 10, fontWeight: '700', color: Colors.white },
+  cardContent: { padding: Spacing.sm },
+  cardName: { fontSize: FontSizes.md - 1, fontWeight: '700', color: Colors.white, marginBottom: Spacing.xs },
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
+  cardPrice: { fontSize: FontSizes.sm, fontWeight: '800', color: Colors.gold },
+  inquireBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  inquireBtnText: { fontSize: FontSizes.xs, color: Colors.gold, fontWeight: '600' },
 });

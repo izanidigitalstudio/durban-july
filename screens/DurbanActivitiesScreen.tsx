@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
+import { useCatalogueColumns } from '../lib/responsive';
 
 type Activity = {
   id: string;
@@ -151,70 +152,61 @@ const activities: Activity[] = [
 export default function DurbanActivitiesScreen() {
   const navigation = useNavigation();
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const numColumns = useCatalogueColumns();
 
   const filtered = selectedCategory === 'All'
     ? activities
     : activities.filter((a) => a.category === selectedCategory);
 
   const renderActivity = ({ item }: { item: Activity }) => (
-    <View style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
-      <View style={styles.categoryBadge}>
-        <Text style={styles.categoryBadgeText}>{item.category}</Text>
+    <View style={[styles.card, { flex: 1 / numColumns }]}>
+      <View style={styles.cardImageContainer}>
+        <Image source={{ uri: item.image }} style={styles.cardImage} />
+        <View style={styles.categoryBadge}>
+          <Text style={styles.categoryBadgeText}>{item.category}</Text>
+        </View>
       </View>
 
       <View style={styles.cardBody}>
-        <Text style={styles.cardTitle}>{item.name}</Text>
-        <Text style={styles.cardDesc}>{item.description}</Text>
+        <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
 
         <View style={styles.locationRow}>
-          <Ionicons name="location" size={14} color={Colors.gold} />
-          <Text style={styles.locationText}>{item.location}</Text>
+          <Ionicons name="location" size={11} color={Colors.gold} />
+          <Text style={styles.locationText} numberOfLines={1}>{item.location}</Text>
         </View>
 
         {item.hours && (
           <View style={styles.locationRow}>
-            <Ionicons name="time-outline" size={14} color={Colors.textSecondary} />
-            <Text style={styles.infoText}>{item.hours}</Text>
+            <Ionicons name="time-outline" size={11} color={Colors.textSecondary} />
+            <Text style={styles.infoText} numberOfLines={1}>{item.hours}</Text>
           </View>
         )}
 
-        {/* Highlights */}
-        <View style={styles.highlightsWrap}>
-          {item.highlights.map((h, i) => (
-            <View key={i} style={styles.highlightChip}>
-              <Text style={styles.highlightText}>{h}</Text>
-            </View>
-          ))}
-        </View>
-
         {/* Price + Actions */}
         <View style={styles.cardFooter}>
-          <Text style={styles.price}>{item.price || 'Free'}</Text>
+          <Text style={styles.price}>{item.price ? item.price.split(' ')[0] : 'Free'}</Text>
           <View style={styles.actions}>
             {item.phone && (
               <TouchableOpacity
-                style={styles.actionBtn}
+                style={styles.iconBtn}
                 onPress={() => Linking.openURL(`tel:${item.phone}`)}
               >
-                <Ionicons name="call" size={14} color={Colors.gold} />
-                <Text style={styles.actionText}>Call</Text>
+                <Ionicons name="call" size={12} color={Colors.gold} />
               </TouchableOpacity>
             )}
             {item.website && (
               <TouchableOpacity
-                style={styles.actionBtn}
+                style={styles.iconBtn}
                 onPress={() => Linking.openURL(item.website!)}
               >
-                <Ionicons name="globe-outline" size={14} color={Colors.gold} />
-                <Text style={styles.actionText}>Visit</Text>
+                <Ionicons name="globe-outline" size={12} color={Colors.gold} />
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              style={[styles.actionBtn, styles.mapBtn]}
+              style={[styles.iconBtn, styles.mapBtn]}
               onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name + ' ' + item.location)}`)}
             >
-              <Text style={styles.mapBtnText}>Map</Text>
+              <Ionicons name="navigate" size={12} color={Colors.black} />
             </TouchableOpacity>
           </View>
         </View>
@@ -256,9 +248,12 @@ export default function DurbanActivitiesScreen() {
       </ScrollView>
 
       <FlatList
+        key={`activities-${numColumns}`}
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderActivity}
+        numColumns={numColumns}
+        columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       />
@@ -292,50 +287,48 @@ const styles = StyleSheet.create({
   chipText: { fontSize: FontSizes.sm, fontWeight: '600', color: Colors.white },
   chipTextActive: { color: Colors.black },
 
-  list: { padding: Spacing.lg, paddingBottom: 100 },
-
+  list: { padding: Spacing.md, paddingBottom: 100 },
+  columnWrapper: { justifyContent: 'space-between', paddingHorizontal: 2 },
   card: {
-    backgroundColor: Colors.card, borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.card, borderRadius: BorderRadius.md,
     borderWidth: 1, borderColor: Colors.cardBorder,
-    marginBottom: Spacing.lg, overflow: 'hidden',
+    margin: 6, overflow: 'hidden',
   },
-  cardImage: { width: '100%', height: 180 },
+  cardImageContainer: {
+    position: 'relative',
+    height: 120,
+    width: '100%',
+  },
+  cardImage: { width: '100%', height: '100%' },
   categoryBadge: {
-    position: 'absolute', top: Spacing.md, left: Spacing.md,
+    position: 'absolute', top: Spacing.xs, left: Spacing.xs,
     backgroundColor: Colors.charcoal + 'DD', borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md, paddingVertical: 4,
+    paddingHorizontal: Spacing.sm, paddingVertical: 2,
   },
-  categoryBadgeText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.white },
-
-  cardBody: { padding: Spacing.lg },
-  cardTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white, marginBottom: Spacing.xs },
-  cardDesc: { fontSize: FontSizes.sm, color: Colors.textSecondary, lineHeight: 20, marginBottom: Spacing.md },
-
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  locationText: { fontSize: FontSizes.sm, color: Colors.gold, flex: 1 },
-  infoText: { fontSize: FontSizes.sm, color: Colors.textSecondary },
-
-  highlightsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: Spacing.sm, marginBottom: Spacing.md },
-  highlightChip: {
-    backgroundColor: Colors.green + '15', borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.sm, paddingVertical: 4,
-  },
-  highlightText: { fontSize: FontSizes.xs, color: Colors.greenLight },
-
+  categoryBadgeText: { fontSize: 10, fontWeight: '700', color: Colors.white },
+  cardBody: { padding: Spacing.sm },
+  cardTitle: { fontSize: FontSizes.md - 1, fontWeight: '700', color: Colors.white, marginBottom: Spacing.xs },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
+  locationText: { fontSize: FontSizes.xs, color: Colors.gold, flex: 1 },
+  infoText: { fontSize: FontSizes.xs, color: Colors.textSecondary },
   cardFooter: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingTop: Spacing.sm, borderTopWidth: 1, borderTopColor: Colors.cardBorder,
+    paddingTop: Spacing.xs, borderTopWidth: 1, borderTopColor: Colors.cardBorder, marginTop: 4,
   },
-  price: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.gold },
-  actions: { flexDirection: 'row', gap: Spacing.sm },
-  actionBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: Spacing.md, paddingVertical: 8,
+  price: { fontSize: FontSizes.sm, fontWeight: '700', color: Colors.gold },
+  actions: { flexDirection: 'row', gap: 4 },
+  iconBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
   },
-  actionText: { fontSize: FontSizes.sm, fontWeight: '600', color: Colors.gold },
   mapBtn: {
-    backgroundColor: Colors.gold, borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.gold,
+    borderColor: Colors.gold,
   },
-  mapBtnText: { fontSize: FontSizes.sm, fontWeight: '700', color: Colors.black },
 });

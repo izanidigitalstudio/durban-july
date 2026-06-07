@@ -13,11 +13,13 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
+import { useCatalogueColumns } from '../lib/responsive';
 import { fashionStores } from '../lib/fashionData';
 
 export default function ShoppingScreen() {
   const navigation = useNavigation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const numColumns = useCatalogueColumns();
 
   const categories = [
     'Boutique',
@@ -43,63 +45,48 @@ export default function ShoppingScreen() {
   };
 
   const renderStoreCard = ({ item }: { item: (typeof fashionStores)[number] }) => (
-    <TouchableOpacity style={styles.storeCard}>
-      <Image source={{ uri: item.image }} style={styles.storeImage} />
-      <View style={styles.categoryBadge}>
-        <Text style={styles.categoryText}>{item.category}</Text>
+    <View style={[styles.storeCard, { flex: 1 / numColumns }]}>
+      <View style={styles.storeImageContainer}>
+        <Image source={{ uri: item.image }} style={styles.storeImage} />
+        <View style={styles.categoryBadge}>
+          <Text style={styles.categoryText}>{item.category}</Text>
+        </View>
       </View>
 
       <View style={styles.storeInfo}>
-        <Text style={styles.storeName}>{item.name}</Text>
-        <Text style={styles.storeDesc} numberOfLines={2}>
-          {item.description}
-        </Text>
+        <Text style={styles.storeName} numberOfLines={1}>{item.name}</Text>
 
         <View style={styles.locationRow}>
-          <Ionicons name="location" size={14} color={Colors.gold} />
-          <Text style={styles.location}>{item.location}</Text>
-        </View>
-
-        <View style={styles.specialtiesRow}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.specialties}
-          >
-            {item.specialties.map((specialty, idx) => (
-              <View key={idx} style={styles.specialtyTag}>
-                <Text style={styles.specialtyText}>{specialty}</Text>
-              </View>
-            ))}
-          </ScrollView>
+          <Ionicons name="location" size={12} color={Colors.gold} />
+          <Text style={styles.location} numberOfLines={1}>{item.location}</Text>
         </View>
 
         <View style={styles.actionRow}>
           <TouchableOpacity
-            style={styles.phoneBtn}
+            style={styles.iconBtn}
             onPress={() => handleCall(item.phone)}
           >
-            <Ionicons name="call" size={16} color={Colors.gold} />
-            <Text style={styles.phoneBtnText}>Call</Text>
+            <Ionicons name="call" size={12} color={Colors.gold} />
           </TouchableOpacity>
 
           {item.website && (
             <TouchableOpacity
-              style={styles.websiteBtn}
+              style={styles.iconBtn}
               onPress={() => handleWebsite(item.website!)}
             >
-              <Ionicons name="globe" size={16} color={Colors.gold} />
-              <Text style={styles.websiteBtnText}>Visit</Text>
+              <Ionicons name="globe" size={12} color={Colors.gold} />
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity style={styles.directionBtn}>
-            <Ionicons name="navigate" size={16} color={Colors.gold} />
-            <Text style={styles.directionBtnText}>Map</Text>
+          <TouchableOpacity 
+            style={[styles.iconBtn, styles.mapBtn]}
+            onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name + ' ' + item.location)}`)}
+          >
+            <Ionicons name="navigate" size={12} color={Colors.background} />
           </TouchableOpacity>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -162,9 +149,12 @@ export default function ShoppingScreen() {
       </ScrollView>
 
       <FlatList
+        key={`shopping-${numColumns}`}
         data={filteredStores}
         renderItem={renderStoreCard}
         keyExtractor={(item) => item.id}
+        numColumns={numColumns}
+        columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
@@ -242,121 +232,80 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
-    gap: Spacing.md,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
   },
   storeCard: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.md,
     backgroundColor: Colors.card,
     overflow: 'hidden',
-    marginBottom: Spacing.md,
+    margin: 6,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+  },
+  storeImageContainer: {
+    position: 'relative',
+    height: 120,
+    width: '100%',
   },
   storeImage: {
     width: '100%',
-    height: 200,
+    height: '100%',
     backgroundColor: Colors.cardBorder,
   },
   categoryBadge: {
     position: 'absolute',
-    top: Spacing.md,
-    left: Spacing.md,
+    top: Spacing.xs,
+    left: Spacing.xs,
     backgroundColor: Colors.gold,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.md,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
   },
   categoryText: {
-    fontSize: FontSizes.xs,
+    fontSize: 10,
     fontWeight: '700',
     color: Colors.background,
   },
   storeInfo: {
-    padding: Spacing.md,
+    padding: Spacing.sm,
   },
   storeName: {
-    fontSize: FontSizes.lg,
+    fontSize: FontSizes.md - 1,
     fontWeight: '700',
     color: Colors.white,
-    marginBottom: Spacing.xs,
-  },
-  storeDesc: {
-    fontSize: FontSizes.sm,
-    color: Colors.textMuted,
-    marginBottom: Spacing.sm,
+    marginBottom: 4,
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.sm,
-    gap: Spacing.xs,
+    gap: 4,
   },
   location: {
-    fontSize: FontSizes.sm,
-    color: Colors.textMuted,
-  },
-  specialtiesRow: {
-    marginBottom: Spacing.md,
-  },
-  specialties: {
-    marginVertical: Spacing.xs,
-  },
-  specialtyTag: {
-    backgroundColor: Colors.background,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.md,
-    marginRight: Spacing.xs,
-  },
-  specialtyText: {
     fontSize: FontSizes.xs,
-    color: Colors.gold,
+    color: Colors.textMuted,
   },
   actionRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: 4,
+    justifyContent: 'space-between',
+    marginTop: 4,
   },
-  phoneBtn: {
+  iconBtn: {
     flex: 1,
-    flexDirection: 'row',
+    height: 28,
+    borderRadius: BorderRadius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.sm,
     backgroundColor: Colors.background,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
   },
-  phoneBtnText: {
-    fontSize: FontSizes.sm,
-    color: Colors.gold,
-    fontWeight: '600',
-  },
-  websiteBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-    backgroundColor: Colors.background,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.xs,
-  },
-  websiteBtnText: {
-    fontSize: FontSizes.sm,
-    color: Colors.gold,
-    fontWeight: '600',
-  },
-  directionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm,
+  mapBtn: {
     backgroundColor: Colors.gold,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.xs,
-  },
-  directionBtnText: {
-    fontSize: FontSizes.sm,
-    color: Colors.background,
-    fontWeight: '600',
+    borderColor: Colors.gold,
   },
 });

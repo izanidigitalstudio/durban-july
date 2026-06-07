@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppData } from '../lib/appState';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
+import { useCatalogueColumns } from '../lib/responsive';
 import { eventCategories, EventItem } from '../lib/data';
 
 const eventDays = [
@@ -23,6 +24,7 @@ export default function EventsScreen({ navigation }: any) {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedDay, setSelectedDay] = useState<string>('All');
   const { activeEvents, scheduleIds: savedEventIds, toggleEvent } = useAppData();
+  const numColumns = useCatalogueColumns();
 
   const handleToggleSchedule = async (eventId: string) => {
     try {
@@ -53,61 +55,60 @@ export default function EventsScreen({ navigation }: any) {
     const isSaved = savedEventIds.includes(item.id);
     return (
       <TouchableOpacity
-        style={styles.card}
+        style={[styles.card, { flex: 1 / numColumns }]}
         onPress={() => navigation.navigate('Detail', { type: 'event', id: item.id })}
         activeOpacity={0.85}
       >
-        <Image source={{ uri: item.image }} style={styles.cardImage} />
-        <View style={styles.dateBadge}>
-          <Text style={styles.dateBadgeDay}>{item.date.split(',')[0]}</Text>
-          <Text style={styles.dateBadgeDate}>{item.date.split(' ').slice(-3).join(' ')}</Text>
+        <View style={styles.cardImageContainer}>
+          <Image source={{ uri: item.image }} style={styles.cardImage} />
+          <View style={styles.dateBadge}>
+            <Text style={styles.dateBadgeDay}>{item.date.split(',')[0].slice(0, 3)}</Text>
+            <Text style={styles.dateBadgeDate}>{item.date.split(' ').slice(-2).join(' ')}</Text>
+          </View>
+          {/* Bookmark button on card image */}
+          <TouchableOpacity
+            style={[styles.bookmarkBtn, isSaved && styles.bookmarkBtnActive]}
+            onPress={(e) => {
+              e.stopPropagation?.();
+              handleToggleSchedule(item.id);
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name={isSaved ? 'bookmark' : 'bookmark-outline'}
+              size={16}
+              color={isSaved ? Colors.gold : Colors.white}
+            />
+          </TouchableOpacity>
         </View>
-        {/* Bookmark button on card image */}
-        <TouchableOpacity
-          style={[styles.bookmarkBtn, isSaved && styles.bookmarkBtnActive]}
-          onPress={(e) => {
-            e.stopPropagation?.();
-            handleToggleSchedule(item.id);
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons
-            name={isSaved ? 'bookmark' : 'bookmark-outline'}
-            size={20}
-            color={isSaved ? Colors.gold : Colors.white}
-          />
-        </TouchableOpacity>
         <View style={styles.cardContent}>
           <View style={styles.categoryRow}>
             <View style={[styles.categoryBadge, getCategoryColor(item.category)]}>
               <Text style={[styles.categoryText, getCategoryTextColor(item.category)]}>{item.category}</Text>
             </View>
-            <Text style={styles.cardTime}>
-              <Ionicons name="time-outline" size={12} color={Colors.textSecondary} /> {item.time}
+            <Text style={styles.cardTime} numberOfLines={1}>
+              {item.time.split(' ')[0]}
             </Text>
           </View>
-          <Text style={styles.cardName}>{item.name}</Text>
-          <Text style={styles.cardVenue}>
-            <Ionicons name="location-outline" size={13} color={Colors.textSecondary} /> {item.venue}, {item.location}
+          <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.cardVenue} numberOfLines={1}>
+            <Ionicons name="location-outline" size={10} color={Colors.textSecondary} /> {item.venue}
           </Text>
-          <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
           <View style={styles.cardFooter}>
-            <Text style={styles.cardPrice}>{item.price}</Text>
-            <View style={styles.footerRight}>
-              <TouchableOpacity
-                style={[styles.addScheduleBtn, isSaved && styles.addScheduleBtnActive]}
-                onPress={() => handleToggleSchedule(item.id)}
-              >
-                <Ionicons
-                  name={isSaved ? 'checkmark-circle' : 'add-circle-outline'}
-                  size={16}
-                  color={isSaved ? Colors.green : Colors.textSecondary}
-                />
-                <Text style={[styles.addScheduleText, isSaved && styles.addScheduleTextActive]}>
-                  {isSaved ? 'Scheduled' : 'Add to Plan'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.cardPrice}>{item.price.split(' ')[0]}</Text>
+            <TouchableOpacity
+              style={[styles.addScheduleBtn, isSaved && styles.addScheduleBtnActive]}
+              onPress={(e) => {
+                e.stopPropagation?.();
+                handleToggleSchedule(item.id);
+              }}
+            >
+              <Ionicons
+                name={isSaved ? 'checkmark' : 'add'}
+                size={14}
+                color={isSaved ? Colors.greenLight : Colors.textSecondary}
+              />
+            </TouchableOpacity>
           </View>
         </View>
       </TouchableOpacity>
@@ -195,9 +196,12 @@ export default function EventsScreen({ navigation }: any) {
       </View>
 
       <FlatList
+        key={`events-${numColumns}`}
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderEvent}
+        numColumns={numColumns}
+        columnWrapperStyle={styles.columnWrapper}
         ListHeaderComponent={ListHeader}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
@@ -299,66 +303,60 @@ const styles = StyleSheet.create({
   chipText: { fontSize: FontSizes.sm, color: Colors.textSecondary, fontWeight: '600' },
   chipTextActive: { color: Colors.black },
 
-  list: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
+  list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
+  columnWrapper: { justifyContent: 'space-between', paddingHorizontal: 2 },
   card: {
-    borderRadius: BorderRadius.lg, overflow: 'hidden',
-    marginBottom: Spacing.lg, backgroundColor: Colors.card,
-    borderWidth: 1, borderColor: Colors.cardBorder,
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    margin: 6,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
   },
-  cardImage: { width: '100%', height: 170 },
+  cardImageContainer: {
+    position: 'relative',
+    height: 120,
+    width: '100%',
+  },
+  cardImage: { width: '100%', height: '100%' },
   dateBadge: {
-    position: 'absolute', top: Spacing.md, left: Spacing.md,
+    position: 'absolute', top: Spacing.xs, left: Spacing.xs,
     backgroundColor: Colors.background + 'EE', borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.xs, paddingVertical: 2,
     alignItems: 'center',
   },
-  dateBadgeDay: { fontSize: FontSizes.xs, color: Colors.gold, fontWeight: '700' },
-  dateBadgeDate: { fontSize: FontSizes.xs, color: Colors.white, fontWeight: '600' },
-  cardContent: { padding: Spacing.lg },
-  categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
-  categoryBadge: { borderRadius: BorderRadius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 3 },
-  categoryText: { fontSize: FontSizes.xs, fontWeight: '700' },
-  cardTime: { fontSize: FontSizes.xs, color: Colors.textSecondary },
-  cardName: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white, marginBottom: 4 },
-  cardVenue: { fontSize: FontSizes.sm, color: Colors.textSecondary, marginBottom: Spacing.sm },
-  cardDesc: { fontSize: FontSizes.sm, color: Colors.textMuted, lineHeight: 20, marginBottom: Spacing.md },
+  dateBadgeDay: { fontSize: 9, color: Colors.gold, fontWeight: '700' },
+  dateBadgeDate: { fontSize: 9, color: Colors.white, fontWeight: '600' },
+  cardContent: { padding: Spacing.sm },
+  categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  categoryBadge: { borderRadius: BorderRadius.sm, paddingHorizontal: 4, paddingVertical: 2 },
+  categoryText: { fontSize: 9, fontWeight: '700' },
+  cardTime: { fontSize: 10, color: Colors.textSecondary },
+  cardName: { fontSize: FontSizes.md - 1, fontWeight: '700', color: Colors.white, marginBottom: 2, height: 32 },
+  cardVenue: { fontSize: FontSizes.xs, color: Colors.textSecondary, marginBottom: 4 },
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardPrice: { fontSize: FontSizes.lg, fontWeight: '800', color: Colors.gold },
-  footerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
+  cardPrice: { fontSize: FontSizes.sm, fontWeight: '800', color: Colors.gold },
   addScheduleBtn: {
-    flexDirection: 'row',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.full,
+    justifyContent: 'center',
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
   },
   addScheduleBtnActive: {
-    backgroundColor: Colors.green + '15',
+    backgroundColor: Colors.green + '20',
     borderColor: Colors.green + '40',
-  },
-  addScheduleText: {
-    fontSize: FontSizes.xs,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
-  addScheduleTextActive: {
-    color: Colors.greenLight,
   },
   bookmarkBtn: {
     position: 'absolute',
-    top: Spacing.md,
-    right: Spacing.md,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    top: Spacing.xs,
+    right: Spacing.xs,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: Colors.background + 'CC',
     alignItems: 'center',
     justifyContent: 'center',

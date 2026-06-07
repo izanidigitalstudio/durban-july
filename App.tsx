@@ -2,8 +2,8 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { AppStateProvider, useAppData } from './lib/appState';
@@ -31,6 +31,9 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function ContentTabs({ isGuest, onSignIn }: { isGuest: boolean; onSignIn: () => void }) {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Platform.OS === 'web' ? 0 : Math.max(insets.bottom, 8);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -39,8 +42,8 @@ function ContentTabs({ isGuest, onSignIn }: { isGuest: boolean; onSignIn: () => 
           backgroundColor: Colors.surface,
           borderTopColor: Colors.cardBorder,
           borderTopWidth: 1,
-          height: 85,
-          paddingBottom: 28,
+          height: 57 + bottomPadding,
+          paddingBottom: bottomPadding,
           paddingTop: 8,
         },
         tabBarActiveTintColor: Colors.gold,

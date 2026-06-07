@@ -7,12 +7,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
+import { useCatalogueColumns } from '../lib/responsive';
 import { marquees, MarqueePackage } from '../lib/data';
 
 const tiers = ['All', 'General', 'VIP', 'VVIP', 'Premium', 'Ultra VIP'] as const;
 
 export default function MarqueesScreen({ navigation }: any) {
   const [selectedTier, setSelectedTier] = useState<string>('All');
+  const numColumns = useCatalogueColumns();
 
   const filtered = selectedTier === 'All'
     ? marquees
@@ -20,29 +22,30 @@ export default function MarqueesScreen({ navigation }: any) {
 
   const renderMarquee = ({ item }: { item: MarqueePackage }) => (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { flex: 1 / numColumns }]}
       onPress={() => navigation.navigate('Detail', { type: 'marquee', id: item.id })}
       activeOpacity={0.85}
     >
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
-      <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.cardGradient} />
-      <View style={styles.cardBadge}>
-        <Text style={styles.cardBadgeText}>{item.tier}</Text>
+      <View style={styles.cardImageContainer}>
+        <Image source={{ uri: item.image }} style={styles.cardImage} />
+        <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={styles.cardGradient} />
+        <View style={styles.cardBadge}>
+          <Text style={styles.cardBadgeText}>{item.tier}</Text>
+        </View>
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.cardName}>{item.name}</Text>
-        <Text style={styles.cardVenue}>
-          <Ionicons name="location-outline" size={12} color={Colors.textSecondary} /> {item.venue}
+        <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+        <Text style={styles.cardVenue} numberOfLines={1}>
+          <Ionicons name="location-outline" size={10} color={Colors.textSecondary} /> {item.venue}
         </Text>
         <View style={styles.cardBottom}>
           <Text style={styles.cardPrice}>{item.price}</Text>
           {item.capacity && (
-            <Text style={styles.cardCapacity}>
-              <Ionicons name="people-outline" size={12} color={Colors.textSecondary} /> {item.capacity}
+            <Text style={styles.cardCapacity} numberOfLines={1}>
+              <Ionicons name="people-outline" size={10} color={Colors.textSecondary} /> {item.capacity}
             </Text>
           )}
         </View>
-        <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -71,9 +74,12 @@ export default function MarqueesScreen({ navigation }: any) {
         />
       </SafeAreaView>
       <FlatList
+        key={`marquees-${numColumns}`}
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderMarquee}
+        numColumns={numColumns}
+        columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       />
@@ -95,25 +101,33 @@ const styles = StyleSheet.create({
   filterChipActive: { backgroundColor: Colors.gold, borderColor: Colors.gold },
   filterText: { fontSize: FontSizes.sm, color: Colors.textSecondary, fontWeight: '600' },
   filterTextActive: { color: Colors.black },
-  list: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
+  list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
+  columnWrapper: { justifyContent: 'space-between', paddingHorizontal: 2 },
   card: {
-    borderRadius: BorderRadius.lg, overflow: 'hidden',
-    marginBottom: Spacing.lg, backgroundColor: Colors.card,
-    borderWidth: 1, borderColor: Colors.cardBorder,
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    margin: 6,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
   },
-  cardImage: { width: '100%', height: 180 },
-  cardGradient: { position: 'absolute', top: 0, left: 0, right: 0, height: 180 },
+  cardImageContainer: {
+    position: 'relative',
+    height: 120,
+    width: '100%',
+  },
+  cardImage: { width: '100%', height: '100%' },
+  cardGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 50 },
   cardBadge: {
-    position: 'absolute', top: Spacing.md, right: Spacing.md,
+    position: 'absolute', top: Spacing.xs, right: Spacing.xs,
     backgroundColor: Colors.gold, borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md, paddingVertical: 4,
+    paddingHorizontal: Spacing.sm, paddingVertical: 2,
   },
-  cardBadgeText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.black },
-  cardContent: { padding: Spacing.lg },
-  cardName: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white, marginBottom: 4 },
-  cardVenue: { fontSize: FontSizes.sm, color: Colors.textSecondary, marginBottom: Spacing.sm },
-  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
-  cardPrice: { fontSize: FontSizes.lg, fontWeight: '800', color: Colors.gold },
-  cardCapacity: { fontSize: FontSizes.xs, color: Colors.textSecondary },
-  cardDesc: { fontSize: FontSizes.sm, color: Colors.textSecondary, lineHeight: 20 },
+  cardBadgeText: { fontSize: 10, fontWeight: '700', color: Colors.black },
+  cardContent: { padding: Spacing.sm },
+  cardName: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.white, marginBottom: 2 },
+  cardVenue: { fontSize: FontSizes.xs, color: Colors.textSecondary, marginBottom: 4 },
+  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardPrice: { fontSize: FontSizes.sm, fontWeight: '800', color: Colors.gold },
+  cardCapacity: { fontSize: FontSizes.xs - 1, color: Colors.textSecondary },
 });

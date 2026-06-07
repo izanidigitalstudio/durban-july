@@ -6,10 +6,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
+import { useCatalogueColumns } from '../lib/responsive';
 import { accommodation, accommodationTypes, AccommodationItem } from '../lib/data';
 
 export default function StayScreen({ navigation }: any) {
   const [selectedType, setSelectedType] = useState<string>('All');
+  const numColumns = useCatalogueColumns();
 
   const filtered = selectedType === 'All'
     ? accommodation
@@ -28,39 +30,33 @@ export default function StayScreen({ navigation }: any) {
 
   const renderItem = ({ item }: { item: AccommodationItem }) => (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { flex: 1 / numColumns }]}
       onPress={() => navigation.navigate('Detail', { type: 'accommodation', id: item.id })}
       activeOpacity={0.85}
     >
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
-      <View style={styles.typeBadge}>
-        <Text style={styles.typeBadgeText}>{item.type}</Text>
+      <View style={styles.cardImageContainer}>
+        <Image source={{ uri: item.image }} style={styles.cardImage} />
+        <View style={styles.typeBadge}>
+          <Text style={styles.typeBadgeText}>{item.type}</Text>
+        </View>
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.cardName}>{item.name}</Text>
-        <View style={styles.starsRow}>{renderStars(item.rating)}</View>
-        <Text style={styles.cardArea}>
-          <Ionicons name="location-outline" size={13} color={Colors.textSecondary} /> {item.area}
-        </Text>
-        <Text style={styles.cardDistance}>
-          <Ionicons name="car-outline" size={13} color={Colors.textSecondary} /> {item.distanceToVenue} to Greyville
-        </Text>
-        <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
-        <View style={styles.amenitiesRow}>
-          {item.amenities.slice(0, 3).map((a, i) => (
-            <View key={i} style={styles.amenityChip}>
-              <Text style={styles.amenityText}>{a}</Text>
-            </View>
-          ))}
-          {item.amenities.length > 3 && (
-            <View style={styles.amenityChip}>
-              <Text style={styles.amenityText}>+{item.amenities.length - 3}</Text>
-            </View>
-          )}
+        <View style={styles.nameRow}>
+          <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+          <View style={styles.ratingBadge}>
+            <Ionicons name="star" size={10} color={Colors.gold} />
+            <Text style={styles.ratingText}>{item.rating}</Text>
+          </View>
         </View>
+        <Text style={styles.cardArea} numberOfLines={1}>
+          <Ionicons name="location-outline" size={11} color={Colors.textSecondary} /> {item.area}
+        </Text>
+        <Text style={styles.cardDistance} numberOfLines={1}>
+          <Ionicons name="car-outline" size={11} color={Colors.textSecondary} /> {item.distanceToVenue}
+        </Text>
         <View style={styles.cardFooter}>
           <View>
-            <Text style={styles.cardPrice}>{item.pricePerNight}</Text>
+            <Text style={styles.cardPrice}>{item.pricePerNight.split(' ')[0]}</Text>
             <Text style={styles.perNight}>per night</Text>
           </View>
           <TouchableOpacity
@@ -103,9 +99,12 @@ export default function StayScreen({ navigation }: any) {
         />
       </SafeAreaView>
       <FlatList
+        key={`stay-${numColumns}`}
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
+        numColumns={numColumns}
+        columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       />
@@ -135,38 +134,41 @@ const styles = StyleSheet.create({
   filterChipActive: { backgroundColor: Colors.gold, borderColor: Colors.gold },
   filterText: { fontSize: FontSizes.sm, color: Colors.textSecondary, fontWeight: '600' },
   filterTextActive: { color: Colors.black },
-  list: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
+  list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
+  columnWrapper: { justifyContent: 'space-between', paddingHorizontal: 2 },
   card: {
-    borderRadius: BorderRadius.lg, overflow: 'hidden',
-    marginBottom: Spacing.lg, backgroundColor: Colors.card,
-    borderWidth: 1, borderColor: Colors.cardBorder,
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    margin: 6,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
   },
-  cardImage: { width: '100%', height: 180 },
+  cardImageContainer: {
+    position: 'relative',
+    height: 120,
+    width: '100%',
+  },
+  cardImage: { width: '100%', height: '100%' },
   typeBadge: {
-    position: 'absolute', top: Spacing.md, right: Spacing.md,
+    position: 'absolute', top: Spacing.xs, right: Spacing.xs,
     backgroundColor: Colors.green, borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md, paddingVertical: 4,
+    paddingHorizontal: Spacing.sm, paddingVertical: 2,
   },
-  typeBadgeText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.white },
-  cardContent: { padding: Spacing.lg },
-  cardName: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white, marginBottom: 4 },
-  starsRow: { flexDirection: 'row', gap: 2, marginBottom: Spacing.sm },
-  cardArea: { fontSize: FontSizes.sm, color: Colors.textSecondary, marginBottom: 2 },
-  cardDistance: { fontSize: FontSizes.sm, color: Colors.textSecondary, marginBottom: Spacing.sm },
-  cardDesc: { fontSize: FontSizes.sm, color: Colors.textMuted, lineHeight: 20, marginBottom: Spacing.md },
-  amenitiesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginBottom: Spacing.md },
-  amenityChip: {
-    backgroundColor: Colors.surface, borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.sm, paddingVertical: 3,
-    borderWidth: 1, borderColor: Colors.cardBorder,
-  },
-  amenityText: { fontSize: FontSizes.xs, color: Colors.textSecondary },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardPrice: { fontSize: FontSizes.lg, fontWeight: '800', color: Colors.gold },
-  perNight: { fontSize: FontSizes.xs, color: Colors.textMuted },
+  typeBadgeText: { fontSize: 10, fontWeight: '700', color: Colors.white },
+  cardContent: { padding: Spacing.sm },
+  nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
+  cardName: { fontSize: FontSizes.md - 1, fontWeight: '700', color: Colors.white, flex: 1, marginRight: 4 },
+  ratingBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: Colors.surface, paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 },
+  ratingText: { fontSize: 10, color: Colors.gold, fontWeight: '600' },
+  cardArea: { fontSize: FontSizes.xs, color: Colors.textSecondary, marginBottom: 2 },
+  cardDistance: { fontSize: FontSizes.xs, color: Colors.textSecondary, marginBottom: 4 },
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
+  cardPrice: { fontSize: FontSizes.sm, fontWeight: '800', color: Colors.gold },
+  perNight: { fontSize: FontSizes.xs - 2, color: Colors.textMuted },
   inquireButton: {
     backgroundColor: Colors.gold, borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.xl, paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md, paddingVertical: 4,
   },
-  inquireButtonText: { fontSize: FontSizes.sm, fontWeight: '700', color: Colors.black },
+  inquireButtonText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.black },
 });
