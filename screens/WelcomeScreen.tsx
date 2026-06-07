@@ -156,8 +156,8 @@ const styles = StyleSheet.create({
   compactContent: { minHeight: '100%' },
   logoArea: { alignItems: 'center', paddingTop: Spacing.xxxl },
   compactLogoArea: { paddingTop: Spacing.md },
-  vipLogo: { width: 84, height: 84, resizeMode: 'contain' },
-  compactVipLogo: { width: 66, height: 66 },
+  vipLogo: { width: 112, height: 112, resizeMode: 'contain' },
+  compactVipLogo: { width: 88, height: 88 },
   bottomArea: { paddingHorizontal: Spacing.xxl, paddingBottom: Spacing.xl },
   compactBottomArea: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm },
   theme: {

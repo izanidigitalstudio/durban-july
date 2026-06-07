@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   heroGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 350 },
   heroContent: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   logoRow: { alignItems: 'center', justifyContent: 'center', paddingTop: Spacing.sm },
-  vipLogo: { width: 64, height: 64, resizeMode: 'contain' },
+  vipLogo: { width: 92, height: 92, resizeMode: 'contain' },
   heroBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: Spacing.xl },
   heroTheme: { fontSize: FontSizes.sm, color: Colors.gold, fontStyle: 'italic', letterSpacing: 2, marginBottom: Spacing.xs },
   heroTitle: { fontSize: FontSizes.hero, fontWeight: '800', color: Colors.white, lineHeight: 44, marginBottom: Spacing.md },
