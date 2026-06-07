@@ -9,6 +9,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { marquees, events, accommodation } from '../lib/data';
 
+const countryAllureHero = require('../assets/durban-july-2026-country-allure.jpg');
+
 const { width } = Dimensions.get('window');
 
 const COUNTDOWN_DATE = new Date('2026-07-04T11:00:00+02:00');
@@ -57,7 +59,7 @@ export default function HomeScreen({ navigation }: any) {
         {/* Hero Section */}
         <View style={styles.heroContainer}>
           <Image
-            source={{ uri: 'https://api.a0.dev/assets/image?text=hollywoodbets+durban+july+horse+racing+greyville+racecourse+aerial+view+grandstand+crowd+horses+galloping+golden+hour+exciting&aspect=9:16&seed=1' }}
+            source={countryAllureHero}
             style={styles.heroImage}
           />
           <LinearGradient

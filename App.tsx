@@ -32,7 +32,7 @@ const Tab = createBottomTabNavigator();
 
 function ContentTabs({ isGuest, onSignIn }: { isGuest: boolean; onSignIn: () => void }) {
   const insets = useSafeAreaInsets();
-  const bottomPadding = Platform.OS === 'web' ? 0 : Math.max(insets.bottom, 8);
+  const bottomPadding = Platform.OS === 'web' ? 8 : Math.max(insets.bottom, 8);
 
   return (
     <Tab.Navigator
@@ -42,8 +42,8 @@ function ContentTabs({ isGuest, onSignIn }: { isGuest: boolean; onSignIn: () => 
           backgroundColor: Colors.surface,
           borderTopColor: Colors.cardBorder,
           borderTopWidth: 1,
-          height: 62 + bottomPadding,
-          paddingBottom: bottomPadding + 4,
+          height: 68 + bottomPadding,
+          paddingBottom: bottomPadding,
           paddingTop: 8,
         },
         tabBarActiveTintColor: Colors.gold,
@@ -51,11 +51,12 @@ function ContentTabs({ isGuest, onSignIn }: { isGuest: boolean; onSignIn: () => 
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          lineHeight: 16,
-          marginBottom: 2,
+          lineHeight: 15,
+          marginBottom: 0,
         },
         tabBarItemStyle: {
           paddingTop: 2,
+          paddingBottom: 3,
         },
       }}
     >

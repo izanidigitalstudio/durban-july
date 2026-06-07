@@ -8,6 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 
+const countryAllurePortrait = require('../assets/durban-july-2026-country-allure-portrait.jpg');
+
 type Props = {
   onGuest: () => void;
   navigation: any;
@@ -50,12 +52,12 @@ export default function WelcomeScreen({ onGuest, navigation }: Props) {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <Image
-        source={{ uri: 'https://api.a0.dev/assets/image?text=hollywoodbets+durban+july+horse+racing+greyville+elegant+vip+guests+dressed+up+luxury+fashion+golden+hour+champagne+celebration&aspect=9:16&seed=42' }}
+        source={countryAllurePortrait}
         style={styles.bgImage}
       />
       <LinearGradient
-        colors={['rgba(11,11,15,0.3)', 'rgba(11,11,15,0.7)', 'rgba(11,11,15,0.95)', Colors.background]}
-        locations={[0, 0.4, 0.65, 0.85]}
+        colors={['rgba(11,11,15,0.15)', 'rgba(11,11,15,0.55)', 'rgba(11,11,15,0.96)', Colors.background]}
+        locations={[0, 0.36, 0.64, 0.86]}
         style={styles.gradient}
       />
 
@@ -76,7 +78,7 @@ export default function WelcomeScreen({ onGuest, navigation }: Props) {
           <View style={[styles.bottomArea, isCompact && styles.compactBottomArea]}>
             <Text style={styles.theme}>"Country Allure"</Text>
             <Text style={[styles.title, isCompact && styles.compactTitle]}>Hollywoodbets{'\n'}Durban July</Text>
-            <Text style={styles.subtitle}>5 July 2026</Text>
+            <Text style={styles.subtitle}>4 July 2026</Text>
             <Text style={[styles.desc, isCompact && styles.compactDesc]}>
               Your VIP guide to marquees, events, accommodation, transport and concierge services for the Durban July weekend.
             </Text>
