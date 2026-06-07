@@ -91,8 +91,13 @@ export default function InquiryScreen({ route, navigation }: any) {
           <View style={{ width: 40 }} />
         </View>
       </SafeAreaView>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+        >
           {/* Item info */}
           <View style={styles.itemCard}>
             <View style={styles.itemBadge}>
@@ -190,7 +195,7 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white },
-  content: { paddingHorizontal: Spacing.xl },
+  content: { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xxxl, flexGrow: 1 },
   itemCard: {
     backgroundColor: Colors.surface, borderRadius: BorderRadius.lg,
     padding: Spacing.lg, borderWidth: 1, borderColor: Colors.cardBorder,
