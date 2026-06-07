@@ -60,6 +60,11 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.heroContainer}>
           <Image
             source={countryAllureHero}
+            style={styles.heroImageBackdrop}
+            blurRadius={12}
+          />
+          <Image
+            source={countryAllureHero}
             style={styles.heroImage}
           />
           <LinearGradient
@@ -226,8 +231,15 @@ export default function HomeScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  heroContainer: { height: 520, position: 'relative' },
-  heroImage: { width: '100%', height: '100%', position: 'absolute' },
+  heroContainer: { height: 520, position: 'relative', backgroundColor: Colors.background, overflow: 'hidden' },
+  heroImageBackdrop: {
+    width: '100%', height: '100%', position: 'absolute',
+    resizeMode: 'cover', opacity: 0.5,
+  },
+  heroImage: {
+    width: '100%', height: '100%', position: 'absolute',
+    resizeMode: 'contain',
+  },
   heroGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 350 },
   heroContent: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   logoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingTop: Spacing.md, gap: Spacing.sm },

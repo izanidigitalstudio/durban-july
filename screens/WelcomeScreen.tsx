@@ -53,6 +53,11 @@ export default function WelcomeScreen({ onGuest, navigation }: Props) {
       <StatusBar barStyle="light-content" />
       <Image
         source={countryAllurePortrait}
+        style={styles.bgImageBackdrop}
+        blurRadius={12}
+      />
+      <Image
+        source={countryAllurePortrait}
         style={styles.bgImage}
       />
       <LinearGradient
@@ -130,7 +135,19 @@ export default function WelcomeScreen({ onGuest, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  bgImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', resizeMode: 'cover' },
+  bgImageBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    opacity: 0.45,
+  },
+  bgImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
   gradient: { ...StyleSheet.absoluteFillObject },
   safeArea: { flex: 1 },
   content: { flexGrow: 1, justifyContent: 'space-between' },
