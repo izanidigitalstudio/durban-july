@@ -4,6 +4,8 @@ import { Platform } from 'react-native';
 import App from './App';
 
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  document.title = 'Durban July VIP Guide 2026 | Marquees, Events & Concierge';
+
   const viewport = document.querySelector('meta[name="viewport"]');
   viewport?.setAttribute(
     'content',

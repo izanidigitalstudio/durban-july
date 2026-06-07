@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "a0-project",
-    "slug": "snack-d3931ae9-71b7-4f74-b285-76294205badc",
+    "name": "Durban July VIP Guide",
+    "slug": "durban-july-vip-guide",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -26,8 +26,8 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/vip-favicon.png"
     },
-    "description": "Quickly generate React Native components with AI"
+    "description": "Your VIP guide to Hollywoodbets Durban July 2026 marquees, events, accommodation, transport, fashion and concierge services."
   }
 }

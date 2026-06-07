@@ -42,8 +42,8 @@ function ContentTabs({ isGuest, onSignIn }: { isGuest: boolean; onSignIn: () => 
           backgroundColor: Colors.surface,
           borderTopColor: Colors.cardBorder,
           borderTopWidth: 1,
-          height: 57 + bottomPadding,
-          paddingBottom: bottomPadding,
+          height: 62 + bottomPadding,
+          paddingBottom: bottomPadding + 4,
           paddingTop: 8,
         },
         tabBarActiveTintColor: Colors.gold,
@@ -51,6 +51,11 @@ function ContentTabs({ isGuest, onSignIn }: { isGuest: boolean; onSignIn: () => 
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
+          lineHeight: 16,
+          marginBottom: 2,
+        },
+        tabBarItemStyle: {
+          paddingTop: 2,
         },
       }}
     >

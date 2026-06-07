@@ -1,5 +1,5 @@
 {
-  "name": "a0-project",
+  "name": "durban-july-vip-guide",
   "version": "1.0.0",
   "license": "0BSD",
   "private": true,
@@ -9,8 +9,8 @@
     "android": "npx expo run:android",
     "ios": "npx expo run:ios",
     "web": "npx expo start --web",
-    "build": "npx expo export -p web",
-    "vercel-build": "npx expo export -p web"
+    "build": "npx expo export -p web && node scripts/inject-seo.mjs",
+    "vercel-build": "npx expo export -p web && node scripts/inject-seo.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~4.0.1",
