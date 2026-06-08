@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Dimensions, StatusBar, Animated,
+  Image, StatusBar, Animated, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,8 +11,6 @@ import { marquees, events, accommodation } from '../lib/data';
 
 const countryAllureHero = require('../assets/durban-july-2026-country-allure.jpg');
 const vipLogo = require('../assets/vip-favicon.png');
-
-const { width } = Dimensions.get('window');
 
 const COUNTDOWN_DATE = new Date('2026-07-04T11:00:00+02:00');
 
@@ -45,6 +43,8 @@ function CountdownUnit({ value, label }: { value: number; label: string }) {
 export default function HomeScreen({ navigation }: any) {
   const countdown = useCountdown();
   const scrollY = useRef(new Animated.Value(0)).current;
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
 
   const featuredMarquees = marquees.slice(0, 4);
   const featuredEvents = events.slice(0, 4);
@@ -61,12 +61,12 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.heroContainer}>
           <Image
             source={countryAllureHero}
-            style={styles.heroImageBackdrop}
+            style={[styles.heroImageBackdrop, isDesktop && styles.heroImageBackdropDesktop]}
             blurRadius={12}
           />
           <Image
             source={countryAllureHero}
-            style={styles.heroImage}
+            style={[styles.heroImage, isDesktop && styles.heroImageDesktop]}
           />
           <LinearGradient
             colors={['transparent', 'rgba(11,11,15,0.6)', 'rgba(11,11,15,0.95)', Colors.background]}
@@ -236,10 +236,12 @@ const styles = StyleSheet.create({
     width: '100%', height: '100%', position: 'absolute',
     resizeMode: 'cover', opacity: 0.5,
   },
+  heroImageBackdropDesktop: { opacity: 0 },
   heroImage: {
     width: '100%', height: '100%', position: 'absolute',
     resizeMode: 'contain',
   },
+  heroImageDesktop: { resizeMode: 'cover' },
   heroGradient: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 350 },
   heroContent: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   logoRow: { alignItems: 'center', justifyContent: 'center', paddingTop: Spacing.sm },
