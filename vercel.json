@@ -6,7 +6,7 @@
   "installCommand": "npm install",
   "rewrites": [
     {
-      "source": "/((?!_expo/|assets/|favicon.ico).*)",
+      "source": "/((?!_expo/|assets/|favicon.ico|favicon.png|apple-touch-icon.png|site.webmanifest).*)",
       "destination": "/"
     }
   ]

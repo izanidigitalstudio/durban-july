@@ -4,7 +4,7 @@
     "slug": "durban-july-vip-guide",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/vip-favicon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -17,8 +17,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/vip-favicon.png",
+        "backgroundColor": "#0B0B0F"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false

@@ -1,6 +1,10 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { copyFile, readFile, writeFile } from 'node:fs/promises';
 
 const indexPath = new URL('../dist/index.html', import.meta.url);
+const faviconSourcePath = new URL('../assets/vip-favicon.png', import.meta.url);
+const faviconPath = new URL('../dist/favicon.png', import.meta.url);
+const appleTouchIconPath = new URL('../dist/apple-touch-icon.png', import.meta.url);
+const manifestPath = new URL('../dist/site.webmanifest', import.meta.url);
 const title = 'Durban July VIP Guide 2026 | Marquees, Events & Concierge';
 const description =
   'Plan your Hollywoodbets Durban July 2026 VIP experience with marquees, weekend events, accommodation, transport, fashion and concierge services.';
@@ -11,7 +15,8 @@ const siteUrl = normalizeUrl(
     process.env.VERCEL_PROJECT_PRODUCTION_URL ||
     process.env.VERCEL_URL
 );
-const socialImage = siteUrl ? `${siteUrl}/favicon.ico` : '/favicon.ico';
+const faviconUrl = siteUrl ? `${siteUrl}/favicon.png` : '/favicon.png';
+const socialImage = faviconUrl;
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -20,6 +25,7 @@ const structuredData = {
       '@type': 'WebSite',
       name: 'Durban July VIP Guide',
       description,
+      image: faviconUrl,
       ...(siteUrl ? { url: siteUrl } : {}),
     },
     {
@@ -47,6 +53,10 @@ const structuredData = {
 
 const tags = [
   `<title>${title}</title>`,
+  '<link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />',
+  '<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />',
+  '<link rel="apple-touch-icon" sizes="512x512" href="/apple-touch-icon.png" />',
+  '<link rel="manifest" href="/site.webmanifest" />',
   `<meta name="description" content="${description}" />`,
   `<meta name="keywords" content="${keywords}" />`,
   '<meta name="robots" content="index, follow, max-image-preview:large" />',
@@ -74,9 +84,33 @@ const tags = [
 let html = await readFile(indexPath, 'utf8');
 html = html
   .replace(/<title>.*?<\/title>/i, '')
+  .replace(/<link rel="shortcut icon"[^>]*>/gi, '')
   .replace('</head>', `    ${tags}\n  </head>`);
 
-await writeFile(indexPath, html);
+const manifest = {
+  name: 'Durban July VIP Guide',
+  short_name: 'Durban July VIP',
+  description,
+  start_url: '/',
+  display: 'standalone',
+  background_color: '#0B0B0F',
+  theme_color: '#0B0B0F',
+  icons: [
+    {
+      src: '/favicon.png',
+      sizes: '512x512',
+      type: 'image/png',
+      purpose: 'any maskable',
+    },
+  ],
+};
+
+await Promise.all([
+  writeFile(indexPath, html),
+  copyFile(faviconSourcePath, faviconPath),
+  copyFile(faviconSourcePath, appleTouchIconPath),
+  writeFile(manifestPath, JSON.stringify(manifest, null, 2)),
+]);
 
 function normalizeUrl(value) {
   if (!value) return '';
