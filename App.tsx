@@ -178,7 +178,7 @@ function AppNavigator() {
 
   return (
     <SafeAreaProvider style={styles.container}>
-      <NavigationContainer>
+      <NavigationContainer documentTitle={{ enabled: false }}>
         {isAuthenticated ? (
           <AuthenticatedApp />
         ) : isGuest ? (
