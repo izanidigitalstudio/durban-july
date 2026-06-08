@@ -53,7 +53,7 @@ export default function InquiryScreen({ route, navigation }: any) {
 
   if (submitted) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
         <SafeAreaView style={styles.successContainer}>
           <View style={styles.successIcon}>
             <Ionicons name="checkmark-circle" size={80} color={Colors.green} />
@@ -81,8 +81,8 @@ export default function InquiryScreen({ route, navigation }: any) {
   }
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: Colors.background }}>
+    <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
+      <SafeAreaView edges={['top']} style={styles.safeHeader}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={24} color={Colors.white} />
@@ -91,8 +91,13 @@ export default function InquiryScreen({ route, navigation }: any) {
           <View style={{ width: 40 }} />
         </View>
       </SafeAreaView>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.formContainer}
+        keyboardVerticalOffset={0}
+      >
         <ScrollView
+          style={styles.scrollView}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
@@ -188,13 +193,22 @@ export default function InquiryScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: {
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
+    backgroundColor: Colors.background,
+  },
+  webContainer: { height: '100dvh', maxHeight: '100dvh' } as any,
+  safeHeader: { flexShrink: 0, backgroundColor: Colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white },
+  formContainer: { flex: 1, minHeight: 0 },
+  scrollView: { flex: 1, minHeight: 0 },
   content: { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xxxl, flexGrow: 1 },
   itemCard: {
     backgroundColor: Colors.surface, borderRadius: BorderRadius.lg,
