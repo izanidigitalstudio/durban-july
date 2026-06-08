@@ -67,6 +67,7 @@ export default function HomeScreen({ navigation }: any) {
           <Image
             source={countryAllureHero}
             style={[styles.heroImage, isDesktop && styles.heroImageDesktop]}
+            blurRadius={isDesktop ? 5 : 0}
           />
           <LinearGradient
             colors={['transparent', 'rgba(11,11,15,0.6)', 'rgba(11,11,15,0.95)', Colors.background]}
