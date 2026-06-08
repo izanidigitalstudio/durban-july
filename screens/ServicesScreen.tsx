@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  Image, ScrollView,
+  Image, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -72,8 +72,8 @@ export default function ServicesScreen({ navigation }: any) {
   );
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: Colors.background }}>
+    <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
+      <SafeAreaView edges={['top']} style={styles.safeHeader}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={Colors.white} />
@@ -107,6 +107,7 @@ export default function ServicesScreen({ navigation }: any) {
           keyExtractor={(item) => item.id}
           renderItem={renderTransport}
           numColumns={numColumns}
+          style={styles.listView}
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
@@ -118,6 +119,7 @@ export default function ServicesScreen({ navigation }: any) {
           keyExtractor={(item) => item.id}
           renderItem={renderConcierge}
           numColumns={numColumns}
+          style={styles.listView}
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
@@ -128,7 +130,9 @@ export default function ServicesScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1, minHeight: 0, overflow: 'hidden', backgroundColor: Colors.background },
+  webContainer: { height: '100dvh', maxHeight: '100dvh' } as any,
+  safeHeader: { flexShrink: 0, backgroundColor: Colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm,
@@ -153,6 +157,7 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: Colors.card },
   tabText: { fontSize: FontSizes.md, color: Colors.textSecondary, fontWeight: '600' },
   tabTextActive: { color: Colors.gold },
+  listView: { flex: 1, minHeight: 0 },
   list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
   columnWrapper: { justifyContent: 'space-between', paddingHorizontal: 2 },
   card: {

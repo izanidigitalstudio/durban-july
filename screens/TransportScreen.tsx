@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image,
-  TouchableOpacity, Linking,
+  TouchableOpacity, Linking, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -60,7 +60,7 @@ export default function TransportScreen() {
   const navigation = useNavigation();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -74,7 +74,11 @@ export default function TransportScreen() {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {transportServices.map((service) => (
           <View key={service.id} style={styles.serviceCard}>
             <Image source={{ uri: service.image }} style={styles.serviceImage} />
@@ -133,8 +137,11 @@ export default function TransportScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
     backgroundColor: Colors.background,
   },
+  webContainer: { height: '100dvh', maxHeight: '100dvh' } as any,
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -162,8 +169,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    minHeight: 0,
+  },
+  contentContainer: {
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.xxxl,
   },
   serviceCard: {
     marginBottom: Spacing.lg,
