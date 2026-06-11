@@ -1,18 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Alert, Platform,
+  Image, Linking, Alert, Platform, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAppData } from '../lib/appState';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { marquees, accommodation } from '../lib/data';
 
+function getImageSource(uri: string | number) {
+  return typeof uri === 'string' ? { uri } : uri;
+}
+
 export default function DetailScreen({ route, navigation }: any) {
   const { type, id } = route.params;
+  const [heroIndex, setHeroIndex] = useState(0);
+  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const heroSlideWidth = Math.max(260, width - (Spacing.lg * 2) - 22);
+
   const { activeEvents, scheduleIds: savedEventIds, toggleEvent } = useAppData();
   const isSaved = type === 'event' && savedEventIds.includes(id);
 
@@ -39,38 +46,98 @@ export default function DetailScreen({ route, navigation }: any) {
   const isEvent = type === 'event';
   const isAccom = type === 'accommodation';
 
+  const heroImages = (Array.isArray(item.images) && item.images.length
+    ? item.images.filter((uri: string | number) => Boolean(uri))
+    : item.image
+      ? [item.image]
+      : []).slice(0, isMarquee ? 10 : undefined);
+
+  const marqueePackages = isMarquee ? item.packageOptions ?? [] : [];
+  const hasMultipleHeroImages = heroImages.length > 1;
+  const heroCountLabel = heroImages.length ? `${heroIndex + 1}/${heroImages.length}` : '';
+  const marqueePackageTitle = isMarquee && marqueePackages.length ? 'Marquee Packages' : null;
+
+  const handleHeroScroll = (event: any) => {
+    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / heroSlideWidth);
+    setHeroIndex(Math.max(0, Math.min(nextIndex, heroImages.length - 1)));
+  };
+
   return (
     <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
       <ScrollView
         style={[styles.scrollView, Platform.OS === 'web' && styles.webScrollView]}
-        contentContainerStyle={{ paddingBottom: 112 + insets.bottom }}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 112 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
       >
         {/* Hero */}
         <View style={styles.heroContainer}>
-          <Image source={{ uri: item.image }} style={styles.heroImage} />
-          <LinearGradient
-            colors={['rgba(11,11,15,0.3)', 'transparent', 'rgba(11,11,15,0.9)', Colors.background]}
-            style={styles.heroGradient}
-          />
-          <SafeAreaView edges={['top']} style={styles.backRow}>
-            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-              <Ionicons name="chevron-back" size={24} color={Colors.white} />
-            </TouchableOpacity>
-            {isEvent && (
-              <TouchableOpacity
-                style={[styles.scheduleBtn, isSaved && styles.scheduleBtnActive]}
-                onPress={handleToggleSchedule}
+          <View style={styles.heroFrame}>
+            {hasMultipleHeroImages ? (
+              <ScrollView
+                horizontal
+                pagingEnabled
+                directionalLockEnabled
+                nestedScrollEnabled
+                decelerationRate="fast"
+                snapToInterval={heroSlideWidth}
+                snapToAlignment="start"
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={handleHeroScroll}
+                scrollEventThrottle={16}
+                style={[styles.heroCarousel, Platform.OS === 'web' && styles.webHeroCarousel]}
+                contentContainerStyle={styles.heroCarouselContent}
               >
-                <Ionicons
-                  name={isSaved ? 'bookmark' : 'bookmark-outline'}
-                  size={22}
-                  color={isSaved ? Colors.gold : Colors.white}
-                />
-              </TouchableOpacity>
+                {heroImages.map((uri: string | number, index: number) => (
+                  <View key={`${String(uri)}-${index}`} style={[styles.heroSlide, { width: heroSlideWidth }]}>
+                    <View style={styles.heroImageShell}>
+                      <Image source={getImageSource(uri)} style={styles.heroImage} resizeMode="contain" />
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : heroImages.length === 1 ? (
+              <View style={styles.singleHeroSlide}>
+                <View style={styles.heroImageShell}>
+                  <Image
+                    source={getImageSource(heroImages[0])}
+                    style={styles.heroImage}
+                    resizeMode="contain"
+                  />
+                </View>
+              </View>
+            ) : (
+              <View style={styles.heroEmptyState}>
+                <Ionicons name="image-outline" size={36} color={Colors.textMuted} />
+                <Text style={styles.heroEmptyText}>No images available</Text>
+              </View>
             )}
-          </SafeAreaView>
-          <View style={styles.heroBottom}>
+
+            <SafeAreaView edges={['top']} style={styles.backRow}>
+              <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+                <Ionicons name="chevron-back" size={24} color={Colors.white} />
+              </TouchableOpacity>
+              {isEvent && (
+                <TouchableOpacity
+                  style={[styles.scheduleBtn, isSaved && styles.scheduleBtnActive]}
+                  onPress={handleToggleSchedule}
+                >
+                  <Ionicons
+                    name={isSaved ? 'bookmark' : 'bookmark-outline'}
+                    size={22}
+                    color={isSaved ? Colors.gold : Colors.white}
+                  />
+                </TouchableOpacity>
+              )}
+            </SafeAreaView>
+            {hasMultipleHeroImages && (
+              <View style={styles.heroCounter}>
+                <Text style={styles.heroCounterText}>{heroCountLabel}</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.heroMeta}>
             {isMarquee && (
               <View style={styles.tierBadge}>
                 <Text style={styles.tierBadgeText}>{item.tier}</Text>
@@ -87,6 +154,12 @@ export default function DetailScreen({ route, navigation }: any) {
               </View>
             )}
             <Text style={styles.heroTitle}>{item.name}</Text>
+            <View style={styles.heroSubline}>
+              <Ionicons name="location-outline" size={14} color={Colors.gold} />
+              <Text style={styles.heroSublineText} numberOfLines={1}>
+                {isEvent ? `${item.venue}, ${item.location}` : isMarquee ? item.venue : `${item.area}`}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -104,10 +177,12 @@ export default function DetailScreen({ route, navigation }: any) {
               </View>
             </>
           )}
-          <View style={styles.infoItem}>
-            <Ionicons name="location-outline" size={16} color={Colors.gold} />
-            <Text style={styles.infoText}>{isEvent ? `${item.venue}, ${item.location}` : isMarquee ? item.venue : `${item.area}`}</Text>
-          </View>
+          {!isEvent && (
+            <View style={styles.infoItem}>
+              <Ionicons name="location-outline" size={16} color={Colors.gold} />
+              <Text style={styles.infoText}>{isMarquee ? item.venue : `${item.area}`}</Text>
+            </View>
+          )}
           {isAccom && (
             <View style={styles.infoItem}>
               <Ionicons name="car-outline" size={16} color={Colors.gold} />
@@ -129,6 +204,65 @@ export default function DetailScreen({ route, navigation }: any) {
           <Text style={styles.sectionTitle}>About</Text>
           <Text style={styles.description}>{item.description}</Text>
         </View>
+
+        {isMarquee && item.contacts?.length ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Contacts</Text>
+            {item.contacts.map((contact: any, i: number) => (
+              <View key={`${contact.person}-${i}`} style={styles.contactCard}>
+                <Text style={styles.contactPerson}>{contact.person}</Text>
+                {!!contact.mobileNumbers?.length && (
+                  <View style={styles.contactBlock}>
+                    <Text style={styles.contactLabel}>Mobile</Text>
+                    {contact.mobileNumbers.map((mobile: string) => (
+                      <TouchableOpacity
+                        key={mobile}
+                        onPress={() => Linking.openURL(`tel:${mobile.replace(/\s+/g, '')}`)}
+                      >
+                        <Text style={styles.contactValue}>{mobile}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+                {!!contact.emails?.length && (
+                  <View style={styles.contactBlock}>
+                    <Text style={styles.contactLabel}>Email</Text>
+                    {contact.emails.map((email: string) => (
+                      <TouchableOpacity
+                        key={email}
+                        onPress={() => Linking.openURL(`mailto:${email}`)}
+                      >
+                        <Text style={styles.contactValue}>{email}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {isMarquee && marqueePackages.length ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{marqueePackageTitle}</Text>
+            {marqueePackages.map((pkg: any, index: number) => (
+              <View key={`${pkg.name}-${index}`} style={styles.packageCard}>
+                <View style={styles.packageHeader}>
+                  <Text style={styles.packageName}>{pkg.name}</Text>
+                  <Text style={styles.packagePrice}>{pkg.price}</Text>
+                </View>
+                <View style={styles.packageFeatureList}>
+                  {pkg.highlights.map((feature: string, i: number) => (
+                    <View key={`${feature}-${i}`} style={styles.featureRow}>
+                      <Ionicons name="checkmark-circle" size={18} color={Colors.green} />
+                      <Text style={styles.featureText}>{feature}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         {/* Includes / Highlights / Amenities */}
         <View style={styles.section}>
@@ -158,10 +292,7 @@ export default function DetailScreen({ route, navigation }: any) {
       </ScrollView>
 
       {/* Bottom CTA */}
-      <LinearGradient
-        colors={['transparent', Colors.background, Colors.background]}
-        style={styles.bottomBar}
-      >
+      <View style={styles.bottomBar}>
         <SafeAreaView edges={['bottom']} style={styles.bottomContent}>
           <View>
             <Text style={styles.bottomPrice}>
@@ -191,20 +322,77 @@ export default function DetailScreen({ route, navigation }: any) {
             </TouchableOpacity>
           </View>
         </SafeAreaView>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, minHeight: 0, overflow: 'hidden', backgroundColor: Colors.background },
-  webContainer: { height: '100dvh', maxHeight: '100dvh' } as any,
+  webContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    height: '100dvh',
+    maxHeight: '100dvh',
+  } as any,
   scrollView: { flex: 1, minHeight: 0 },
-  webScrollView: { height: '100dvh', maxHeight: '100dvh' } as any,
+  webScrollView: {
+    height: '100%',
+    maxHeight: '100%',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    touchAction: 'pan-y',
+    WebkitOverflowScrolling: 'touch',
+  } as any,
+  scrollContent: { flexGrow: 1 },
   errorText: { color: Colors.white, fontSize: FontSizes.lg, padding: Spacing.xl },
-  heroContainer: { height: 350, position: 'relative' },
-  heroImage: { width: '100%', height: '100%' },
-  heroGradient: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  heroContainer: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xxxl * 1.5, paddingBottom: Spacing.md },
+  heroFrame: {
+    height: 190,
+    position: 'relative',
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+  },
+  heroCarousel: { flex: 1 },
+  webHeroCarousel: { touchAction: 'pan-x' } as any,
+  heroCarouselContent: { alignItems: 'stretch' },
+  singleHeroSlide: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  heroSlide: {
+    height: '100%',
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  heroImageShell: {
+    flex: 1,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+    backgroundColor: Colors.deepMaroon,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: Colors.deepMaroon,
+  },
+  heroEmptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: Colors.surface,
+  },
+  heroEmptyText: { color: Colors.textSecondary, fontSize: FontSizes.sm, fontWeight: '600' },
   backRow: {
     position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
@@ -226,17 +414,39 @@ const styles = StyleSheet.create({
   scheduleBtnActive: {
     backgroundColor: Colors.gold + '30',
   },
-  heroBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: Spacing.xl },
+  heroCounter: {
+    position: 'absolute',
+    top: 56,
+    right: Spacing.lg,
+    zIndex: 10,
+    backgroundColor: Colors.background + 'AA',
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+  },
+  heroCounterText: {
+    color: Colors.white,
+    fontSize: FontSizes.xs,
+    fontWeight: '700',
+  },
+  heroMeta: {
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+  },
   tierBadge: {
     alignSelf: 'flex-start', backgroundColor: Colors.gold,
     borderRadius: BorderRadius.sm, paddingHorizontal: Spacing.md, paddingVertical: 4, marginBottom: Spacing.sm,
   },
   tierBadgeText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.black },
-  heroTitle: { fontSize: FontSizes.xxxl, fontWeight: '800', color: Colors.white, lineHeight: 36 },
+  heroTitle: { fontSize: FontSizes.xxl, fontWeight: '800', color: Colors.white, lineHeight: 30 },
+  heroSubline: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+  heroSublineText: { flex: 1, fontSize: FontSizes.sm, color: Colors.textSecondary },
   infoRow: {
     paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg,
     backgroundColor: Colors.surface, marginHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.lg, marginTop: -Spacing.md,
+    borderRadius: BorderRadius.lg, marginTop: Spacing.md,
     borderWidth: 1, borderColor: Colors.cardBorder, gap: Spacing.sm,
   },
   infoItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
@@ -255,8 +465,45 @@ const styles = StyleSheet.create({
   description: { fontSize: FontSizes.md, color: Colors.textSecondary, lineHeight: 24 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, marginBottom: Spacing.md },
   featureText: { fontSize: FontSizes.md, color: Colors.textSecondary, flex: 1 },
+  contactCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  contactPerson: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.white, marginBottom: Spacing.sm },
+  contactBlock: { marginTop: Spacing.sm },
+  contactLabel: { fontSize: FontSizes.xs, color: Colors.textMuted, textTransform: 'uppercase', marginBottom: 4 },
+  contactValue: { fontSize: FontSizes.sm, color: Colors.gold, lineHeight: 20 },
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   ratingText: { fontSize: FontSizes.md, color: Colors.gold, fontWeight: '600', marginLeft: Spacing.sm },
+  packageCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  packageHeader: {
+    marginBottom: Spacing.sm,
+  },
+  packageName: {
+    fontSize: FontSizes.md,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+  packagePrice: {
+    fontSize: FontSizes.sm,
+    color: Colors.gold,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  packageFeatureList: {
+    marginTop: Spacing.sm,
+  },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingTop: Spacing.xxxl },
   bottomContent: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',

@@ -1,4 +1,5 @@
 import React from 'react';
+declare const require: any;
 import {
   View, Text, StyleSheet, ScrollView, Image,
   TouchableOpacity, Linking, Platform,
@@ -9,6 +10,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 
 const transportServices = [
+  {
+    id: 'syavaya-black',
+    name: 'Syavaya Black Chauffeur Service',
+    category: 'Chauffeur',
+    description: 'Trusted premium luxury chauffeur service with 24-hour bookings, professional uniformed drivers, and tailored airport, event, and corporate travel across South Africa.',
+    features: [
+      '24-hour open line for bookings',
+      'Professional and uniformed drivers',
+      'Airport transfers and event shuttles',
+      'Corporate travel and private hire',
+    ],
+    price: 'Quote on request',
+    image: "https://nabdgzjpwhkjfimljnql.supabase.co/storage/v1/object/public/project_assets/2446b8d7-3eca-44a3-8684-fb85aea35f71/assets/bfcbee07-5a1e-4522-99db-408f8d08f3a0_08ae4ca3.png",
+    phone: '+27 822 133 997',
+    email: 'info@syavaya.co.za',
+    website: 'syavayagroup.co.za/syavaya-black',
+    coverage: 'National coverage from South Africa travel hubs',
+  },
   {
     id: 'shuttle',
     name: 'July VIP Shuttle Service',
@@ -54,7 +73,29 @@ const transportServices = [
     phone: '+27 31 910 1000',
     website: 'www.heli-africa.co.za',
   },
+  {
+    id: 'luxury-car',
+    name: 'Luxury Car Hire',
+    category: 'Luxury Car',
+    description: 'Self-drive in style. Premium vehicles including Porsche, Ferrari, Lamborghini, and Bentley.',
+    features: [
+      'Exotic and luxury vehicle range',
+      'Delivery to hotel/airport',
+      'Full insurance included',
+      'GPS navigation',
+      'Roadside assistance',
+      'Weekend packages available',
+    ],
+    price: 'From R5,000/day',
+    image: 'https://api.a0.dev/assets/image?text=luxury+car+hire+porsche+ferrari&aspect=16:9&seed=4004',
+    phone: '+27 31 510 9000',
+    website: 'www.exoticdrive.co.za',
+  },
 ];
+
+function getImageSource(image: string | number) {
+  return typeof image === 'string' ? { uri: image } : image;
+}
 
 export default function TransportScreen() {
   const navigation = useNavigation();
@@ -75,13 +116,14 @@ export default function TransportScreen() {
       </View>
 
       <ScrollView
-        style={styles.content}
+        style={[styles.content, Platform.OS === 'web' && styles.webScroll]}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
       >
         {transportServices.map((service) => (
           <View key={service.id} style={styles.serviceCard}>
-            <Image source={{ uri: service.image }} style={styles.serviceImage} />
+            <Image source={getImageSource(service.image)} style={styles.serviceImage} />
             <View style={styles.categoryBadge}>
               <Text style={styles.categoryText}>{service.category}</Text>
             </View>
@@ -89,6 +131,10 @@ export default function TransportScreen() {
             <View style={styles.serviceInfo}>
               <Text style={styles.serviceName}>{service.name}</Text>
               <Text style={styles.serviceDesc}>{service.description}</Text>
+
+              {service.coverage ? (
+                <Text style={styles.coverageText}>{service.coverage}</Text>
+              ) : null}
 
               <View style={styles.featuresList}>
                 {service.features.map((feature, idx) => (
@@ -104,7 +150,7 @@ export default function TransportScreen() {
               <View style={styles.actionButtons}>
                 <TouchableOpacity
                   style={styles.callButton}
-                  onPress={() => Linking.openURL(`tel:${service.phone}`)}
+                  onPress={() => service.phone && Linking.openURL(`tel:${service.phone}`)}
                 >
                   <Ionicons name="call" size={20} color={Colors.gold} />
                   <Text style={styles.buttonText}>Call</Text>
@@ -112,7 +158,7 @@ export default function TransportScreen() {
 
                 <TouchableOpacity
                   style={styles.visitButton}
-                  onPress={() => Linking.openURL(`https://${service.website}`)}
+                  onPress={() => service.website && Linking.openURL(`https://${service.website}`)}
                 >
                   <Ionicons name="globe" size={20} color={Colors.gold} />
                   <Text style={styles.buttonText}>Visit</Text>
@@ -120,7 +166,7 @@ export default function TransportScreen() {
 
                 <TouchableOpacity
                   style={styles.enquireButton}
-                  onPress={() => Linking.openURL(`https://${service.website}/enquire`)}
+                  onPress={() => service.website && Linking.openURL(`https://${service.website}/#book`)}
                 >
                   <Text style={styles.enquireText}>Enquire</Text>
                   <Ionicons name="arrow-forward" size={18} color={Colors.charcoal} />
@@ -141,8 +187,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: Colors.background,
   },
-  webContainer: { height: '100dvh', maxHeight: '100dvh' } as any,
+  webContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    height: '100dvh',
+    maxHeight: '100dvh',
+  } as any,
   header: {
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
@@ -171,6 +226,12 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
   },
+  webScroll: {
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    touchAction: 'pan-y',
+    WebkitOverflowScrolling: 'touch',
+  } as any,
   contentContainer: {
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.xxxl,
@@ -213,6 +274,13 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginBottom: Spacing.md,
     lineHeight: 20,
+  },
+  coverageText: {
+    fontSize: FontSizes.xs,
+    color: Colors.textMuted,
+    marginBottom: Spacing.md,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   featuresList: {
     marginBottom: Spacing.md,

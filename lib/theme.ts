@@ -15,6 +15,7 @@ export const Colors = {
   greenDark: '#0E3D22',
   red: '#C0392B',
   burgundy: '#6B1D3A',
+  deepMaroon: '#30101A',
   accent: '#C9A84C',
   background: '#0B0B0F',
   surface: '#14141A',

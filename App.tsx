@@ -5,8 +5,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { ConvexAuthProvider } from '@convex-dev/auth/react';
 
 import { AppStateProvider, useAppData } from './lib/appState';
+import { convex, convexAuthStorage } from './lib/convex';
 import { Colors } from './lib/theme';
 import HomeScreen from './screens/HomeScreen';
 import MarqueesScreen from './screens/MarqueesScreen';
@@ -26,6 +28,7 @@ import AdminPinScreen from './screens/AdminPinScreen';
 import AdminDashboardScreen from './screens/AdminDashboardScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import AuthScreen from './screens/AuthScreen';
+import SponsorsScreen from './screens/SponsorsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -123,6 +126,7 @@ function AuthenticatedApp() {
       <Stack.Screen name="Concierge" component={ConciergeScreen} />
       <Stack.Screen name="Theme" component={ThemeScreen} />
       <Stack.Screen name="DurbanActivities" component={DurbanActivitiesScreen} />
+      <Stack.Screen name="Sponsors" component={SponsorsScreen} />
       <Stack.Screen name="AdminPin" component={AdminPinScreen} />
       <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
     </Stack.Navigator>
@@ -145,6 +149,7 @@ function GuestApp({ onSignIn }: { onSignIn: () => void }) {
       <Stack.Screen name="Concierge" component={ConciergeScreen} />
       <Stack.Screen name="Theme" component={ThemeScreen} />
       <Stack.Screen name="DurbanActivities" component={DurbanActivitiesScreen} />
+      <Stack.Screen name="Sponsors" component={SponsorsScreen} />
       <Stack.Screen name="AdminPin" component={AdminPinScreen} />
       <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
     </Stack.Navigator>
@@ -153,7 +158,7 @@ function GuestApp({ onSignIn }: { onSignIn: () => void }) {
 
 function WelcomeFlow({ onGuest }: { onGuest: () => void }) {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator initialRouteName="Auth" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Welcome">
         {(props) => <WelcomeScreen {...props} onGuest={onGuest} />}
       </Stack.Screen>
@@ -193,9 +198,11 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <AppStateProvider>
-      <AppNavigator />
-    </AppStateProvider>
+    <ConvexAuthProvider client={convex} storage={convexAuthStorage}>
+      <AppStateProvider>
+        <AppNavigator />
+      </AppStateProvider>
+    </ConvexAuthProvider>
   );
 }
 

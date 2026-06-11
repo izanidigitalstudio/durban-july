@@ -10,6 +10,10 @@ import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { useCatalogueColumns } from '../lib/responsive';
 import { eventCategories, EventItem } from '../lib/data';
 
+function getImageSource(image: string | number) {
+  return typeof image === 'string' ? { uri: image } : image;
+}
+
 const eventDays = [
   { key: 'All', label: 'All Days', date: '' },
   { key: 'Wednesday', label: 'Wed', date: '1 July' },
@@ -60,7 +64,7 @@ export default function EventsScreen({ navigation }: any) {
         activeOpacity={0.85}
       >
         <View style={styles.cardImageContainer}>
-          <Image source={{ uri: item.image }} style={styles.cardImage} />
+          <Image source={getImageSource(item.image)} style={styles.cardImage} />
           <View style={styles.dateBadge}>
             <Text style={styles.dateBadgeDay}>{item.date.split(',')[0].slice(0, 3)}</Text>
             <Text style={styles.dateBadgeDate}>{item.date.split(' ').slice(-2).join(' ')}</Text>
@@ -95,7 +99,7 @@ export default function EventsScreen({ navigation }: any) {
             <Ionicons name="location-outline" size={10} color={Colors.textSecondary} /> {item.venue}
           </Text>
           <View style={styles.cardFooter}>
-            <Text style={styles.cardPrice}>{item.price.split(' ')[0]}</Text>
+            <Text style={styles.cardPrice}>{item.price}</Text>
             <TouchableOpacity
               style={[styles.addScheduleBtn, isSaved && styles.addScheduleBtnActive]}
               onPress={(e) => {

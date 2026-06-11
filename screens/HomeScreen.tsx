@@ -14,6 +14,10 @@ const vipLogo = require('../assets/vip-favicon.png');
 
 const COUNTDOWN_DATE = new Date('2026-07-04T11:00:00+02:00');
 
+function getImageSource(image: string | number) {
+  return typeof image === 'string' ? { uri: image } : image;
+}
+
 function useCountdown() {
   const [now, setNow] = React.useState(new Date());
   React.useEffect(() => {
@@ -146,7 +150,7 @@ export default function HomeScreen({ navigation }: any) {
                 style={styles.featuredCard}
                 onPress={() => navigation.navigate('Detail', { type: 'marquee', id: m.id })}
               >
-                <Image source={{ uri: m.image }} style={styles.featuredImage} />
+                <Image source={getImageSource(m.image)} style={styles.featuredImage} />
                 <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={styles.featuredGradient} />
                 <View style={styles.featuredBadge}>
                   <Text style={styles.featuredBadgeText}>{m.tier}</Text>
@@ -174,7 +178,7 @@ export default function HomeScreen({ navigation }: any) {
               style={styles.eventCard}
               onPress={() => navigation.navigate('Detail', { type: 'event', id: e.id })}
             >
-              <Image source={{ uri: e.image }} style={styles.eventImage} />
+              <Image source={getImageSource(e.image)} style={styles.eventImage} />
               <View style={styles.eventInfo}>
                 <View style={styles.eventCategoryBadge}>
                   <Text style={styles.eventCategoryText}>{e.category}</Text>

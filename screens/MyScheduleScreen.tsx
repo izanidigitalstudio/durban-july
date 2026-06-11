@@ -9,6 +9,10 @@ import { useAppData } from '../lib/appState';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { EventItem } from '../lib/data';
 
+function getImageSource(image: string | number) {
+  return typeof image === 'string' ? { uri: image } : image;
+}
+
 const dayOrder = ['Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Monday'];
 
 const dayDates: Record<string, string> = {
@@ -114,7 +118,7 @@ export default function MyScheduleScreen({ navigation }: any) {
           <View style={styles.timelineLine} />
         </View>
         <View style={styles.eventContent}>
-          <Image source={{ uri: event.image }} style={styles.eventImage} />
+          <Image source={getImageSource(event.image)} style={styles.eventImage} />
           <View style={styles.eventDetails}>
             <View style={styles.eventTimeRow}>
               <Ionicons name="time-outline" size={12} color={Colors.gold} />

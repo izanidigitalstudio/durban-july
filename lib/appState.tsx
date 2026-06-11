@@ -1,14 +1,17 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuthActions, useConvexAuth } from '@convex-dev/auth/react';
+import { useMutation, useQuery } from 'convex/react';
 
 import { EventItem, events as staticEvents } from './data';
+import { api } from '../convex/_generated/api';
 
 const STORAGE_KEY = '@durban_july_webapp_state';
 
 export type AppUser = {
   id: string;
   email: string;
-  password: string;
+  password?: string;
   name: string;
   displayName?: string;
   bio?: string;
@@ -51,13 +54,6 @@ type StoredState = {
   members: Member[];
 };
 
-type AuthInput = {
-  email: string;
-  password: string;
-  flow: 'signIn' | 'signUp';
-  name?: string;
-};
-
 type EventInput = Omit<ManagedEvent, '_id' | 'id' | 'isActive'> & {
   priceValue: number;
   highlights: string[];
@@ -80,7 +76,6 @@ type AppStateValue = {
   inquiries: Inquiry[];
   enterGuest: () => Promise<void>;
   exitGuest: () => Promise<void>;
-  signIn: (input: AuthInput) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (input: { displayName: string; bio: string; profileImageUrl?: string }) => Promise<void>;
   toggleEvent: (input: { eventId: string }) => Promise<string[]>;
@@ -125,7 +120,7 @@ function sanitizeState(input: Partial<StoredState> | null | undefined): StoredSt
   const initial = createInitialState();
 
   return {
-    isGuest: input?.isGuest ?? initial.isGuest,
+    isGuest: false,
     currentUserId: input?.currentUserId ?? initial.currentUserId,
     users: input?.users ?? initial.users,
     scheduleByUser: input?.scheduleByUser ?? initial.scheduleByUser,
@@ -137,7 +132,11 @@ function sanitizeState(input: Partial<StoredState> | null | undefined): StoredSt
 
 export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<StoredState>(createInitialState);
-  const [isReady, setIsReady] = useState(false);
+  const [isStorageReady, setIsStorageReady] = useState(false);
+  const { isLoading: isAuthLoading, isAuthenticated } = useConvexAuth();
+  const { signOut: convexSignOut } = useAuthActions();
+  const remoteProfile = useQuery(api.users.getProfile, isAuthenticated ? {} : 'skip');
+  const updateRemoteProfile = useMutation(api.users.updateProfile);
 
   useEffect(() => {
     let isMounted = true;
@@ -150,18 +149,18 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
         if (!value) {
           setState(createInitialState());
-          setIsReady(true);
+          setIsStorageReady(true);
           return;
         }
 
         const parsed = JSON.parse(value) as Partial<StoredState>;
         setState(sanitizeState(parsed));
-        setIsReady(true);
+        setIsStorageReady(true);
       })
       .catch(() => {
         if (isMounted) {
           setState(createInitialState());
-          setIsReady(true);
+          setIsStorageReady(true);
         }
       });
 
@@ -171,32 +170,47 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!isReady) {
+    if (!isStorageReady) {
       return;
     }
 
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {
       // Best-effort persistence for the web app.
     });
-  }, [isReady, state]);
+  }, [isStorageReady, state]);
 
-  const currentUser = useMemo(
-    () => state.users.find((user) => user.id === state.currentUserId) ?? null,
-    [state.currentUserId, state.users]
-  );
+  const currentUser = useMemo<AppUser | null>(() => {
+    if (!isAuthenticated || !remoteProfile) {
+      return null;
+    }
+
+    return {
+      id: String(remoteProfile._id),
+      email: remoteProfile.email ?? '',
+      name: remoteProfile.name ?? remoteProfile.displayName ?? 'VIP Member',
+      displayName: remoteProfile.displayName,
+      bio: remoteProfile.bio,
+      profileImageUrl: remoteProfile.profileImageUrl ?? remoteProfile.image ?? '',
+    };
+  }, [isAuthenticated, remoteProfile]);
+
+  const currentUserId = currentUser?.id ?? null;
+  const isReady = isStorageReady
+    && !isAuthLoading
+    && (!isAuthenticated || remoteProfile !== undefined);
 
   const scheduleIds = useMemo(() => {
-    if (!state.currentUserId) {
+    if (!currentUserId) {
       return [];
     }
 
-    return state.scheduleByUser[state.currentUserId] ?? [];
-  }, [state.currentUserId, state.scheduleByUser]);
+    return state.scheduleByUser[currentUserId] ?? [];
+  }, [currentUserId, state.scheduleByUser]);
 
   const value = useMemo<AppStateValue>(() => ({
     isReady,
     isGuest: state.isGuest,
-    isAuthenticated: Boolean(currentUser),
+    isAuthenticated,
     currentUser,
     scheduleIds,
     activeEvents: state.events.filter((event) => event.isActive),
@@ -215,89 +229,32 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         isGuest: false,
       }));
     },
-    signIn: async ({ email, password, flow, name }) => {
-      const normalizedEmail = email.trim().toLowerCase();
-
-      if (!normalizedEmail || !password.trim()) {
-        throw new Error('Email and password are required.');
-      }
-
-      if (flow === 'signUp') {
-        if (!name?.trim()) {
-          throw new Error('Name is required.');
-        }
-
-        if (state.users.some((user) => user.email === normalizedEmail)) {
-          throw new Error('An account with that email already exists.');
-        }
-
-        const newUser: AppUser = {
-          id: makeId('user'),
-          email: normalizedEmail,
-          password,
-          name: name.trim(),
-          displayName: name.trim(),
-          bio: '',
-          profileImageUrl: '',
-        };
-
-        setState((current) => ({
-          ...current,
-          isGuest: false,
-          currentUserId: newUser.id,
-          users: [...current.users, newUser],
-        }));
-        return;
-      }
-
-      const existingUser = state.users.find(
-        (user) => user.email === normalizedEmail && user.password === password
-      );
-
-      if (!existingUser) {
-        throw new Error('Invalid email or password.');
-      }
-
+    signOut: async () => {
+      await convexSignOut();
       setState((current) => ({
         ...current,
         isGuest: false,
-        currentUserId: existingUser.id,
-      }));
-    },
-    signOut: async () => {
-      setState((current) => ({
-        ...current,
         currentUserId: null,
       }));
     },
-    updateProfile: async ({ displayName, bio, profileImageUrl }) => {
-      if (!state.currentUserId) {
+    updateProfile: async ({ displayName, bio }) => {
+      if (!currentUserId) {
         throw new Error('You must be signed in.');
       }
-
-      setState((current) => ({
-        ...current,
-        users: current.users.map((user) =>
-          user.id === current.currentUserId
-            ? {
-                ...user,
-                displayName: displayName.trim(),
-                bio: bio.trim(),
-                profileImageUrl: profileImageUrl?.trim() ?? '',
-              }
-            : user
-        ),
-      }));
+      await updateRemoteProfile({
+        displayName: displayName.trim(),
+        bio: bio.trim(),
+      });
     },
     toggleEvent: async ({ eventId }) => {
-      if (!state.currentUserId) {
+      if (!currentUserId) {
         throw new Error('Sign in required.');
       }
 
       let nextIds: string[] = [];
 
       setState((current) => {
-        const existingIds = current.scheduleByUser[current.currentUserId as string] ?? [];
+        const existingIds = current.scheduleByUser[currentUserId] ?? [];
         const hasEvent = existingIds.includes(eventId);
         nextIds = hasEvent
           ? existingIds.filter((id) => id !== eventId)
@@ -307,7 +264,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           ...current,
           scheduleByUser: {
             ...current.scheduleByUser,
-            [current.currentUserId as string]: nextIds,
+            [currentUserId]: nextIds,
           },
         };
       });
@@ -315,7 +272,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return nextIds;
     },
     clearSchedule: async () => {
-      if (!state.currentUserId) {
+      if (!currentUserId) {
         return;
       }
 
@@ -323,7 +280,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         ...current,
         scheduleByUser: {
           ...current.scheduleByUser,
-          [current.currentUserId as string]: [],
+          [currentUserId]: [],
         },
       }));
     },
@@ -455,7 +412,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
       return sanitized.length;
     },
-  }), [currentUser, isReady, scheduleIds, state]);
+  }), [
+    convexSignOut,
+    currentUser,
+    currentUserId,
+    isAuthenticated,
+    isReady,
+    scheduleIds,
+    state,
+    updateRemoteProfile,
+  ]);
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }

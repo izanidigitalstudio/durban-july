@@ -5,11 +5,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuthActions } from '@convex-dev/auth/react';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
-import { useAppData } from '../lib/appState';
 
 export default function AuthScreen({ navigation }: any) {
-  const { signIn } = useAppData();
+  const { signIn } = useAuthActions();
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +29,7 @@ export default function AuthScreen({ navigation }: any) {
 
     try {
       setLoading(true);
-      await signIn({
+      await signIn('password', {
         email: email.trim().toLowerCase(),
         password,
         flow: mode,
@@ -56,7 +56,14 @@ export default function AuthScreen({ navigation }: any) {
             keyboardShouldPersistTaps="handled"
           >
             {/* Header */}
-            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => (
+                navigation.canGoBack()
+                  ? navigation.goBack()
+                  : navigation.navigate('Welcome')
+              )}
+            >
               <Ionicons name="chevron-back" size={24} color={Colors.white} />
             </TouchableOpacity>
 

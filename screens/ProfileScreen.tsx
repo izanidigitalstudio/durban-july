@@ -92,18 +92,21 @@ export default function ProfileScreen({ navigation, isGuest, onSignIn }: Props) 
             {[
               { icon: 'car-sport-outline' as const, label: 'Transport', count: transport.length },
               { icon: 'diamond-outline' as const, label: 'Concierge', count: conciergeServices.length },
+              { icon: 'ribbon-outline' as const, label: 'Sponsors', count: 'Official partners' },
             ].map((service) => (
               <TouchableOpacity
                 key={service.label}
                 style={styles.serviceGridItem}
-                onPress={() => navigation.getParent()?.navigate('ServicesTab')}
+                onPress={() => navigation.getParent()?.navigate(service.label === 'Sponsors' ? 'Sponsors' : 'ServicesTab')}
                 activeOpacity={0.8}
               >
                 <LinearGradient colors={[Colors.green, Colors.greenDark]} style={styles.serviceIconWrap}>
                   <Ionicons name={service.icon} size={24} color={Colors.gold} />
                 </LinearGradient>
                 <Text style={styles.serviceGridLabel}>{service.label}</Text>
-                <Text style={styles.serviceGridCount}>{service.count} options</Text>
+                <Text style={styles.serviceGridCount}>
+                  {typeof service.count === 'number' ? `${service.count} options` : service.count}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -282,6 +285,17 @@ export default function ProfileScreen({ navigation, isGuest, onSignIn }: Props) 
             <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
           </TouchableOpacity>
 
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Sponsors')}>
+            <View style={[styles.menuIcon, { backgroundColor: Colors.gold + '18' }]}>
+              <Ionicons name="ribbon-outline" size={20} color={Colors.gold} />
+            </View>
+            <View style={styles.menuTextArea}>
+              <Text style={styles.menuLabel}>Official Sponsors</Text>
+              <Text style={styles.menuDesc}>Partners and supporting brands</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+
           <View style={styles.menuDivider} />
 
           <TouchableOpacity style={styles.menuItem} onPress={handleSignOut}>
@@ -342,9 +356,10 @@ const styles = StyleSheet.create({
   },
   signInGoldBtnText: { fontSize: FontSizes.md, fontWeight: '700', color: Colors.black },
   sectionTitle: { fontSize: FontSizes.xl, fontWeight: '700', color: Colors.white, marginBottom: Spacing.lg },
-  servicesGrid: { flexDirection: 'row', gap: Spacing.md },
+  servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
   serviceGridItem: {
-    flex: 1, backgroundColor: Colors.card, borderRadius: BorderRadius.lg,
+    flexBasis: '45%', flexGrow: 1, minWidth: 140,
+    backgroundColor: Colors.card, borderRadius: BorderRadius.lg,
     borderWidth: 1, borderColor: Colors.cardBorder,
     padding: Spacing.lg, alignItems: 'center',
   },

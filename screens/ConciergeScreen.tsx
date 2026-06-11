@@ -90,9 +90,10 @@ export default function ConciergeScreen() {
       </View>
 
       <ScrollView
-        style={styles.content}
+        style={[styles.content, Platform.OS === 'web' && styles.webScroll]}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
       >
         {conciergeServices.map((service) => (
           <View key={service.id} style={styles.serviceCard}>
@@ -156,8 +157,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: Colors.background,
   },
-  webContainer: { height: '100dvh', maxHeight: '100dvh' } as any,
+  webContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    height: '100dvh',
+    maxHeight: '100dvh',
+  } as any,
   header: {
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
@@ -186,6 +196,12 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
   },
+  webScroll: {
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    touchAction: 'pan-y',
+    WebkitOverflowScrolling: 'touch',
+  } as any,
   contentContainer: {
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.xxxl,

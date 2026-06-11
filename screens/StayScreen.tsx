@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   Image,
@@ -6,16 +6,19 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
-import { useCatalogueColumns } from '../lib/responsive';
 import { accommodation, accommodationTypes, AccommodationItem } from '../lib/data';
+import { useCatalogueColumns } from '../lib/responsive';
 
 export default function StayScreen({ navigation }: any) {
   const [selectedType, setSelectedType] = useState<string>('All');
   const numColumns = useCatalogueColumns();
 
-  const filtered = selectedType === 'All'
-    ? accommodation
-    : accommodation.filter(a => a.type === selectedType);
+  const filtered = useMemo(() => {
+    const baseList = selectedType === 'All'
+      ? accommodation
+      : accommodation.filter((a) => a.type === selectedType);
+    return baseList;
+  }, [selectedType]);
 
   const renderStars = (count: number) => {
     return Array.from({ length: 5 }).map((_, i) => (
@@ -30,33 +33,39 @@ export default function StayScreen({ navigation }: any) {
 
   const renderItem = ({ item }: { item: AccommodationItem }) => (
     <TouchableOpacity
-      style={[styles.card, { flex: 1 / numColumns }]}
+      style={styles.card}
       onPress={() => navigation.navigate('Detail', { type: 'accommodation', id: item.id })}
       activeOpacity={0.85}
     >
-      <View style={styles.cardImageContainer}>
-        <Image source={{ uri: item.image }} style={styles.cardImage} />
-        <View style={styles.typeBadge}>
-          <Text style={styles.typeBadgeText}>{item.type}</Text>
-        </View>
+      <Image source={{ uri: item.image }} style={styles.cardImage} />
+      <View style={styles.typeBadge}>
+        <Text style={styles.typeBadgeText}>{item.type}</Text>
       </View>
       <View style={styles.cardContent}>
-        <View style={styles.nameRow}>
-          <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-          <View style={styles.ratingBadge}>
-            <Ionicons name="star" size={10} color={Colors.gold} />
-            <Text style={styles.ratingText}>{item.rating}</Text>
-          </View>
+        <Text style={styles.cardName}>{item.name}</Text>
+        <View style={styles.starsRow}>{renderStars(item.rating)}</View>
+        <Text style={styles.cardArea}>
+          <Ionicons name="location-outline" size={13} color={Colors.textSecondary} /> {item.area}
+        </Text>
+        <Text style={styles.cardDistance}>
+          <Ionicons name="car-outline" size={13} color={Colors.textSecondary} /> {item.distanceToVenue} to Greyville
+        </Text>
+        <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
+        <View style={styles.amenitiesRow}>
+          {item.amenities.slice(0, 3).map((a: string, i: number) => (
+            <View key={i} style={styles.amenityChip}>
+              <Text style={styles.amenityText}>{a}</Text>
+            </View>
+          ))}
+          {item.amenities.length > 3 && (
+            <View style={styles.amenityChip}>
+              <Text style={styles.amenityText}>+{item.amenities.length - 3}</Text>
+            </View>
+          )}
         </View>
-        <Text style={styles.cardArea} numberOfLines={1}>
-          <Ionicons name="location-outline" size={11} color={Colors.textSecondary} /> {item.area}
-        </Text>
-        <Text style={styles.cardDistance} numberOfLines={1}>
-          <Ionicons name="car-outline" size={11} color={Colors.textSecondary} /> {item.distanceToVenue}
-        </Text>
         <View style={styles.cardFooter}>
           <View>
-            <Text style={styles.cardPrice}>{item.pricePerNight.split(' ')[0]}</Text>
+            <Text style={styles.cardPrice}>{item.pricePerNight}</Text>
             <Text style={styles.perNight}>per night</Text>
           </View>
           <TouchableOpacity
@@ -77,18 +86,21 @@ export default function StayScreen({ navigation }: any) {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={Colors.white} />
           </TouchableOpacity>
-          <View>
-            <Text style={styles.headerTitle}>Where to Stay</Text>
-            <Text style={styles.headerSub}>Premium Accommodation · July Weekend</Text>
+          <View style={styles.headerCopy}>
+            <Text style={styles.headerTitle}>Accommodation</Text>
+            <Text style={styles.headerSub}>50+ Premium Durban stays for Durban July</Text>
+            <Text style={styles.headerNote}>
+              Curated around the most sought-after areas: Umhlanga, Morningside, Musgrave, North Beach, and Greyville access.
+            </Text>
           </View>
         </View>
         <FlatList
           horizontal
           data={accommodationTypes}
-          keyExtractor={(item) => item}
+          keyExtractor={(item: string) => item}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterRow}
-          renderItem={({ item }) => (
+          renderItem={({ item }: { item: (typeof accommodationTypes)[number] }) => (
             <TouchableOpacity
               style={[styles.filterChip, selectedType === item && styles.filterChipActive]}
               onPress={() => setSelectedType(item)}
@@ -97,14 +109,24 @@ export default function StayScreen({ navigation }: any) {
             </TouchableOpacity>
           )}
         />
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryValue}>{accommodation.length}+</Text>
+            <Text style={styles.summaryLabel}>Premium stays</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryValue}>5–15 min</Text>
+            <Text style={styles.summaryLabel}>Top areas to Greyville</Text>
+          </View>
+        </View>
       </SafeAreaView>
       <FlatList
-        key={`stay-${numColumns}`}
+        key={numColumns}
         data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
         numColumns={numColumns}
-        columnWrapperStyle={styles.columnWrapper}
+        columnWrapperStyle={styles.column}
+        keyExtractor={(item: AccommodationItem) => item.id}
+        renderItem={renderItem}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       />
@@ -115,16 +137,19 @@ export default function StayScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
-    flexDirection: 'row', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'flex-start',
     paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm,
     gap: Spacing.md,
   },
   backBtn: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center',
+    marginTop: 2,
   },
+  headerCopy: { flex: 1 },
   headerTitle: { fontSize: FontSizes.xxl, fontWeight: '800', color: Colors.white },
-  headerSub: { fontSize: FontSizes.sm, color: Colors.gold, marginTop: 2 },
+  headerSub: { fontSize: FontSizes.sm, color: Colors.gold, marginTop: 2, fontWeight: '700' },
+  headerNote: { fontSize: FontSizes.xs, color: Colors.textSecondary, marginTop: 6, lineHeight: 16 },
   filterRow: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md, gap: Spacing.sm },
   filterChip: {
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm,
@@ -134,41 +159,56 @@ const styles = StyleSheet.create({
   filterChipActive: { backgroundColor: Colors.gold, borderColor: Colors.gold },
   filterText: { fontSize: FontSizes.sm, color: Colors.textSecondary, fontWeight: '600' },
   filterTextActive: { color: Colors.black },
-  list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
-  columnWrapper: { justifyContent: 'space-between', paddingHorizontal: 2 },
-  card: {
-    borderRadius: BorderRadius.md,
-    overflow: 'hidden',
-    margin: 6,
-    backgroundColor: Colors.card,
+  summaryRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  summaryCard: {
+    flex: 1,
+    backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
   },
-  cardImageContainer: {
-    position: 'relative',
-    height: 120,
-    width: '100%',
+  summaryValue: { fontSize: FontSizes.lg, fontWeight: '800', color: Colors.gold },
+  summaryLabel: { fontSize: FontSizes.xs, color: Colors.textSecondary, marginTop: 4 },
+  list: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
+  column: { gap: Spacing.lg },
+  card: {
+    flex: 1,
+    borderRadius: BorderRadius.lg, overflow: 'hidden',
+    marginBottom: Spacing.lg, backgroundColor: Colors.card,
+    borderWidth: 1, borderColor: Colors.cardBorder,
   },
-  cardImage: { width: '100%', height: '100%' },
+  cardImage: { width: '100%', height: 180 },
   typeBadge: {
-    position: 'absolute', top: Spacing.xs, right: Spacing.xs,
+    position: 'absolute', top: Spacing.md, right: Spacing.md,
     backgroundColor: Colors.green, borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.sm, paddingVertical: 2,
-  },
-  typeBadgeText: { fontSize: 10, fontWeight: '700', color: Colors.white },
-  cardContent: { padding: Spacing.sm },
-  nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
-  cardName: { fontSize: FontSizes.md - 1, fontWeight: '700', color: Colors.white, flex: 1, marginRight: 4 },
-  ratingBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: Colors.surface, paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 },
-  ratingText: { fontSize: 10, color: Colors.gold, fontWeight: '600' },
-  cardArea: { fontSize: FontSizes.xs, color: Colors.textSecondary, marginBottom: 2 },
-  cardDistance: { fontSize: FontSizes.xs, color: Colors.textSecondary, marginBottom: 4 },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
-  cardPrice: { fontSize: FontSizes.sm, fontWeight: '800', color: Colors.gold },
-  perNight: { fontSize: FontSizes.xs - 2, color: Colors.textMuted },
-  inquireButton: {
-    backgroundColor: Colors.gold, borderRadius: BorderRadius.sm,
     paddingHorizontal: Spacing.md, paddingVertical: 4,
   },
-  inquireButtonText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.black },
+  typeBadgeText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.white },
+  cardContent: { padding: Spacing.lg },
+  cardName: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white, marginBottom: 4 },
+  starsRow: { flexDirection: 'row', gap: 2, marginBottom: Spacing.sm },
+  cardArea: { fontSize: FontSizes.sm, color: Colors.textSecondary, marginBottom: 2 },
+  cardDistance: { fontSize: FontSizes.sm, color: Colors.textSecondary, marginBottom: Spacing.sm },
+  cardDesc: { fontSize: FontSizes.sm, color: Colors.textMuted, lineHeight: 20, marginBottom: Spacing.md },
+  amenitiesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginBottom: Spacing.md },
+  amenityChip: {
+    backgroundColor: Colors.surface, borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.sm, paddingVertical: 3,
+    borderWidth: 1, borderColor: Colors.cardBorder,
+  },
+  amenityText: { fontSize: FontSizes.xs, color: Colors.textSecondary },
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardPrice: { fontSize: FontSizes.lg, fontWeight: '800', color: Colors.gold },
+  perNight: { fontSize: FontSizes.xs, color: Colors.textMuted },
+  inquireButton: {
+    backgroundColor: Colors.gold, borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.xl, paddingVertical: Spacing.sm,
+  },
+  inquireButtonText: { fontSize: FontSizes.sm, fontWeight: '700', color: Colors.black },
 });
