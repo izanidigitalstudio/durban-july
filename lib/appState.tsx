@@ -136,7 +136,41 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const { isLoading: isAuthLoading, isAuthenticated } = useConvexAuth();
   const { signOut: convexSignOut } = useAuthActions();
   const remoteProfile = useQuery(api.users.getProfile, isAuthenticated ? {} : 'skip');
+  const remoteEvents = useQuery(api.admin.getEvents);
+  const remoteScheduleIds = useQuery(api.schedule.getMySchedule, isAuthenticated ? {} : 'skip');
   const updateRemoteProfile = useMutation(api.users.updateProfile);
+  const toggleRemoteEvent = useMutation(api.schedule.toggleEvent);
+  const clearRemoteSchedule = useMutation(api.schedule.clearSchedule);
+  const createRemoteInquiry = useMutation(api.inquiries.createInquiry);
+  const seedRemoteEvents = useMutation(api.admin.seedEvents);
+  const createRemoteEvent = useMutation(api.admin.createEvent);
+  const updateRemoteEvent = useMutation(api.admin.updateEvent);
+  const deleteRemoteEvent = useMutation(api.admin.deleteEvent);
+  const addRemoteMember = useMutation(api.admin.addMember);
+  const deleteRemoteMember = useMutation(api.admin.deleteMember);
+  const bulkAddRemoteMembers = useMutation(api.admin.bulkAddMembers);
+
+  useEffect(() => {
+    if (remoteEvents?.length === 0) {
+      seedRemoteEvents({
+        events: staticEvents.map((event) => ({
+          name: event.name,
+          date: event.date,
+          time: event.time,
+          venue: event.venue,
+          location: event.location,
+          category: event.category,
+          description: event.description,
+          price: event.price,
+          priceValue: event.priceValue,
+          highlights: event.highlights,
+          image: event.image,
+        })),
+      }).catch(() => {
+        // Keep the UI usable with bundled data if initial seeding is unavailable.
+      });
+    }
+  }, [remoteEvents, seedRemoteEvents]);
 
   useEffect(() => {
     let isMounted = true;
@@ -199,13 +233,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     && !isAuthLoading
     && (!isAuthenticated || remoteProfile !== undefined);
 
-  const scheduleIds = useMemo(() => {
-    if (!currentUserId) {
-      return [];
-    }
-
-    return state.scheduleByUser[currentUserId] ?? [];
-  }, [currentUserId, state.scheduleByUser]);
+  const scheduleIds = isAuthenticated ? remoteScheduleIds ?? [] : [];
+  const adminEvents = remoteEvents === undefined || remoteEvents.length === 0
+    ? state.events
+    : remoteEvents.map((event: any) => ({
+        ...event,
+        id: String(event._id),
+      })) as ManagedEvent[];
+  const members = state.members;
+  const inquiries = state.inquiries;
 
   const value = useMemo<AppStateValue>(() => ({
     isReady,
@@ -213,10 +249,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated,
     currentUser,
     scheduleIds,
-    activeEvents: state.events.filter((event) => event.isActive),
-    adminEvents: state.events,
-    members: state.members,
-    inquiries: state.inquiries,
+    activeEvents: adminEvents.filter((event) => event.isActive),
+    adminEvents,
+    members,
+    inquiries,
     enterGuest: async () => {
       setState((current) => ({
         ...current,
@@ -250,140 +286,41 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       if (!currentUserId) {
         throw new Error('Sign in required.');
       }
-
-      let nextIds: string[] = [];
-
-      setState((current) => {
-        const existingIds = current.scheduleByUser[currentUserId] ?? [];
-        const hasEvent = existingIds.includes(eventId);
-        nextIds = hasEvent
-          ? existingIds.filter((id) => id !== eventId)
-          : [...existingIds, eventId];
-
-        return {
-          ...current,
-          scheduleByUser: {
-            ...current.scheduleByUser,
-            [currentUserId]: nextIds,
-          },
-        };
-      });
-
-      return nextIds;
+      const result = await toggleRemoteEvent({ eventId });
+      return result.added
+        ? [...scheduleIds, eventId]
+        : scheduleIds.filter((id: string) => id !== eventId);
     },
     clearSchedule: async () => {
       if (!currentUserId) {
         return;
       }
-
-      setState((current) => ({
-        ...current,
-        scheduleByUser: {
-          ...current.scheduleByUser,
-          [currentUserId]: [],
-        },
-      }));
+      await clearRemoteSchedule({});
     },
     createInquiry: async (input) => {
-      setState((current) => ({
-        ...current,
-        inquiries: [
-          {
-            ...input,
-            _id: makeId('inquiry'),
-            createdAt: Date.now(),
-          },
-          ...current.inquiries,
-        ],
-      }));
+      await createRemoteInquiry(input);
     },
     seedEvents: async ({ events }) => {
-      const existingEvents = new Set(state.events.map((event) => `${event.name}|${event.date}`));
-      const toAdd = events.filter((event) => !existingEvents.has(`${event.name}|${event.date}`));
-
-      if (!toAdd.length) {
-        return 0;
-      }
-
-      setState((current) => ({
-        ...current,
-        events: [
-          ...current.events,
-          ...toAdd.map((event) => ({
-            ...event,
-            id: makeId('event'),
-            _id: makeId('event'),
-            isActive: true,
-          })),
-        ],
-      }));
-
-      return toAdd.length;
+      return await seedRemoteEvents({ events });
     },
     createEvent: async (input) => {
-      const id = makeId('event');
-      setState((current) => ({
-        ...current,
-        events: [
-          {
-            ...input,
-            id,
-            _id: id,
-            isActive: true,
-          },
-          ...current.events,
-        ],
-      }));
+      await createRemoteEvent(input);
     },
     updateEvent: async ({ id, ...updates }) => {
-      setState((current) => ({
-        ...current,
-        events: current.events.map((event) =>
-          event._id === id
-            ? {
-                ...event,
-                ...updates,
-              }
-            : event
-        ),
-      }));
+      await updateRemoteEvent({ id: id as any, ...updates });
     },
     deleteEvent: async ({ id }) => {
-      const event = state.events.find((item) => item._id === id);
-
-      setState((current) => ({
-        ...current,
-        events: current.events.filter((item) => item._id !== id),
-        scheduleByUser: event
-          ? Object.fromEntries(
-              Object.entries(current.scheduleByUser).map(([userId, ids]) => [
-                userId,
-                ids.filter((eventId) => eventId !== event.id),
-              ])
-            )
-          : current.scheduleByUser,
-      }));
+      await deleteRemoteEvent({ id: id as any });
     },
     addMember: async ({ name, email, phone }) => {
-      setState((current) => ({
-        ...current,
-        members: [
-          {
-            _id: makeId('member'),
-            name: name.trim(),
-            email: email?.trim(),
-            phone: phone?.trim(),
-            status: 'active',
-          },
-          ...current.members,
-        ],
-      }));
+      await addRemoteMember({
+        name: name.trim(),
+        email: email?.trim(),
+        phone: phone?.trim(),
+      });
     },
     deleteMember: async ({ id }) => {
-      setState((current) => ({
-        ...current,
-        members: current.members.filter((member) => member._id !== id),
-      }));
+      await deleteRemoteMember({ id: id as any });
     },
     bulkAddMembers: async ({ members }) => {
       const sanitized = members
@@ -398,28 +335,29 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         return 0;
       }
 
-      setState((current) => ({
-        ...current,
-        members: [
-          ...sanitized.map((member) => ({
-            _id: makeId('member'),
-            ...member,
-            status: 'active' as const,
-          })),
-          ...current.members,
-        ],
-      }));
-
-      return sanitized.length;
+      return await bulkAddRemoteMembers({ members: sanitized });
     },
   }), [
+    addRemoteMember,
+    adminEvents,
+    bulkAddRemoteMembers,
+    clearRemoteSchedule,
     convexSignOut,
+    createRemoteEvent,
+    createRemoteInquiry,
     currentUser,
     currentUserId,
+    deleteRemoteEvent,
+    deleteRemoteMember,
+    inquiries,
     isAuthenticated,
     isReady,
+    members,
     scheduleIds,
+    seedRemoteEvents,
     state,
+    toggleRemoteEvent,
+    updateRemoteEvent,
     updateRemoteProfile,
   ]);
 

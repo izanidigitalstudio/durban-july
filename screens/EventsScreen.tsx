@@ -1,34 +1,45 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  Image, ScrollView, Pressable, Alert,
+  Image, ScrollView, Pressable, Alert, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useAppData } from '../lib/appState';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../convex/_generated/api';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
+import { events, eventCategories, EventItem } from '../lib/data';
+import AdaptiveImage from '../components/AdaptiveImage';
 import { useCatalogueColumns } from '../lib/responsive';
-import { eventCategories, EventItem } from '../lib/data';
 
 function getImageSource(image: string | number) {
   return typeof image === 'string' ? { uri: image } : image;
 }
 
+function getEventImageSource(item: EventItem) {
+  const image = item.images?.[0] ?? item.image;
+  return typeof image === 'string' ? { uri: image } : image;
+}
+
 const eventDays = [
   { key: 'All', label: 'All Days', date: '' },
-  { key: 'Wednesday', label: 'Wed', date: '1 July' },
-  { key: 'Thursday', label: 'Thu', date: '2 July' },
-  { key: 'Friday', label: 'Fri', date: '3 July' },
-  { key: 'Saturday', label: 'Sat', date: '4 July' },
-  { key: 'Sunday', label: 'Sun', date: '5 July' },
   { key: 'Monday', label: 'Mon', date: '6 July' },
+  { key: 'Sunday', label: 'Sun', date: '5 July' },
+  { key: 'Saturday', label: 'Sat', date: '4 July' },
+  { key: 'Friday', label: 'Fri', date: '3 July' },
+  { key: 'Thursday', label: 'Thu', date: '2 July' },
+  { key: 'Wednesday', label: 'Wed', date: '1 July' },
+  { key: 'Tuesday', label: 'Tue', date: '7 July' },
 ];
 
 export default function EventsScreen({ navigation }: any) {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedDay, setSelectedDay] = useState<string>('All');
-  const { activeEvents, scheduleIds: savedEventIds, toggleEvent } = useAppData();
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const numColumns = useCatalogueColumns();
+
+  const savedEventIds = useQuery(api.schedule.getMySchedule) ?? [];
+  const toggleEvent = useMutation(api.schedule.toggleEvent);
 
   const handleToggleSchedule = async (eventId: string) => {
     try {
@@ -40,80 +51,52 @@ export default function EventsScreen({ navigation }: any) {
   };
 
   const dayCounts = useMemo(() => {
-    const counts: Record<string, number> = { All: activeEvents.length };
-    eventDays.forEach(d => {
+    const counts: Record<string, number> = { All: events.length };
+    eventDays.forEach((d: { key: string; label: string; date: string }) => {
       if (d.key !== 'All') {
-        counts[d.key] = activeEvents.filter(e => e.date.startsWith(d.key)).length;
+        counts[d.key] = events.filter((e: EventItem) => e.date.startsWith(d.key)).length;
       }
     });
     return counts;
-  }, [activeEvents]);
+  }, []);
 
-  const filtered = activeEvents.filter(e => {
+  const filtered = events.filter((e: EventItem) => {
     const catMatch = selectedCategory === 'All' || e.category === selectedCategory;
     const dayMatch = selectedDay === 'All' || e.date.startsWith(selectedDay);
-    return catMatch && dayMatch;
+    const query = searchQuery.trim().toLowerCase();
+    const searchMatch =
+      query.length === 0 ||
+      [e.name, e.date, e.time, e.category, e.venue, e.location, e.description]
+        .join(' ')
+        .toLowerCase()
+        .includes(query);
+    return catMatch && dayMatch && searchMatch;
   });
 
   const renderEvent = ({ item }: { item: EventItem }) => {
-    const isSaved = savedEventIds.includes(item.id);
+    const cardTitle = item.name.replace(/^Demo:\s*/, '');
     return (
       <TouchableOpacity
-        style={[styles.card, { flex: 1 / numColumns }]}
+        style={[styles.card, numColumns === 2 && styles.gridCard]}
         onPress={() => navigation.navigate('Detail', { type: 'event', id: item.id })}
         activeOpacity={0.85}
       >
-        <View style={styles.cardImageContainer}>
-          <Image source={getImageSource(item.image)} style={styles.cardImage} />
-          <View style={styles.dateBadge}>
-            <Text style={styles.dateBadgeDay}>{item.date.split(',')[0].slice(0, 3)}</Text>
-            <Text style={styles.dateBadgeDate}>{item.date.split(' ').slice(-2).join(' ')}</Text>
+        <View style={styles.cardImageWrap}>
+          <AdaptiveImage
+            source={getEventImageSource(item)}
+            style={styles.cardImage}
+          />
+          <View style={[styles.cardBadge, getCategoryColor(item.category)]}>
+            <Text style={[styles.cardBadgeText, getCategoryTextColor(item.category)]}>{item.category}</Text>
           </View>
-          {/* Bookmark button on card image */}
-          <TouchableOpacity
-            style={[styles.bookmarkBtn, isSaved && styles.bookmarkBtnActive]}
-            onPress={(e) => {
-              e.stopPropagation?.();
-              handleToggleSchedule(item.id);
-            }}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons
-              name={isSaved ? 'bookmark' : 'bookmark-outline'}
-              size={16}
-              color={isSaved ? Colors.gold : Colors.white}
-            />
-          </TouchableOpacity>
         </View>
-        <View style={styles.cardContent}>
-          <View style={styles.categoryRow}>
-            <View style={[styles.categoryBadge, getCategoryColor(item.category)]}>
-              <Text style={[styles.categoryText, getCategoryTextColor(item.category)]}>{item.category}</Text>
-            </View>
-            <Text style={styles.cardTime} numberOfLines={1}>
-              {item.time.split(' ')[0]}
-            </Text>
-          </View>
-          <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>
+        <View style={styles.cardInfo}>
+          <Text style={styles.cardName} numberOfLines={2}>{cardTitle}</Text>
           <Text style={styles.cardVenue} numberOfLines={1}>
-            <Ionicons name="location-outline" size={10} color={Colors.textSecondary} /> {item.venue}
+            <Ionicons name="location-outline" size={13} color={Colors.textSecondary} /> {item.venue}, {item.location}
           </Text>
-          <View style={styles.cardFooter}>
-            <Text style={styles.cardPrice}>{item.price}</Text>
-            <TouchableOpacity
-              style={[styles.addScheduleBtn, isSaved && styles.addScheduleBtnActive]}
-              onPress={(e) => {
-                e.stopPropagation?.();
-                handleToggleSchedule(item.id);
-              }}
-            >
-              <Ionicons
-                name={isSaved ? 'checkmark' : 'add'}
-                size={14}
-                color={isSaved ? Colors.greenLight : Colors.textSecondary}
-              />
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.cardPrice}>{item.price}</Text>
+          <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -121,6 +104,30 @@ export default function EventsScreen({ navigation }: any) {
 
   const ListHeader = () => (
     <View>
+      {/* Search */}
+      <View style={styles.searchSection}>
+        <Text style={styles.searchSectionLabel}>Search events</Text>
+        <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={18} color={Colors.textMuted} />
+          <TextInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search by name, date, venue, category..."
+            placeholderTextColor={Colors.textMuted}
+            style={styles.searchInput}
+            returnKeyType="search"
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          {searchQuery.length > 0 && (
+            <Pressable onPress={() => setSearchQuery('')} hitSlop={10}>
+              <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+            </Pressable>
+          )}
+        </View>
+        <Text style={styles.searchHint}>Try searching by event name, date, venue, category, or keyword.</Text>
+      </View>
+
       {/* ROW 1: Description */}
       <View style={styles.descriptionRow}>
         <Text style={styles.descriptionText}>1 - 6 July 2026  ·  Durban & Surrounds</Text>
@@ -201,11 +208,11 @@ export default function EventsScreen({ navigation }: any) {
 
       <FlatList
         key={`events-${numColumns}`}
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderEvent}
+        data={filtered as EventItem[]}
         numColumns={numColumns}
-        columnWrapperStyle={styles.columnWrapper}
+        columnWrapperStyle={numColumns === 2 ? styles.column : undefined}
+        keyExtractor={(item: EventItem) => item.id}
+        renderItem={renderEvent}
         ListHeaderComponent={ListHeader}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
@@ -213,7 +220,7 @@ export default function EventsScreen({ navigation }: any) {
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={48} color={Colors.textMuted} />
             <Text style={styles.emptyText}>No events for this selection</Text>
-            <Text style={styles.emptySubText}>Try a different day or category</Text>
+            <Text style={styles.emptySubText}>Try a different day, category, or search term</Text>
           </View>
         }
       />
@@ -229,6 +236,7 @@ function getCategoryColor(cat: string) {
     'Concert': { backgroundColor: '#3498DB' + '25' },
     'Lifestyle': { backgroundColor: Colors.green + '25' },
     'After Party': { backgroundColor: '#F39C12' + '25' },
+    'Golf': { backgroundColor: '#2ECC71' + '25' },
   };
   return map[cat] || {};
 }
@@ -241,6 +249,7 @@ function getCategoryTextColor(cat: string) {
     'Concert': { color: '#3498DB' },
     'Lifestyle': { color: Colors.greenLight },
     'After Party': { color: '#F39C12' },
+    'Golf': { color: '#2ECC71' },
   };
   return map[cat] || {};
 }
@@ -257,20 +266,54 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: FontSizes.xxl, fontWeight: '800', color: Colors.white },
 
-  descriptionRow: { paddingHorizontal: Spacing.lg, paddingBottom: 12 },
+  searchSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: 8,
+    paddingBottom: 10,
+  },
+  searchSectionLabel: {
+    fontSize: FontSizes.sm,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.md,
+    height: 48,
+  },
+  searchInput: {
+    flex: 1,
+    color: Colors.white,
+    fontSize: FontSizes.sm,
+    paddingVertical: 0,
+  },
+  searchHint: {
+    marginTop: 8,
+    fontSize: FontSizes.xs,
+    color: Colors.textMuted,
+  },
+
+  descriptionRow: { paddingHorizontal: Spacing.lg, paddingBottom: 10 },
   descriptionText: { fontSize: FontSizes.sm, color: Colors.gold, fontWeight: '600' },
 
-  dayFilterRow: { marginBottom: 10 },
-  dayFilterContent: { paddingHorizontal: Spacing.lg, gap: 8 },
+  dayFilterRow: { marginBottom: 8 },
+  dayFilterContent: { paddingHorizontal: Spacing.lg, gap: 6 },
   dayChip: {
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: BorderRadius.lg,
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
-    minWidth: 64,
+    minWidth: 60,
   },
   dayChipActive: {
     backgroundColor: Colors.green,
@@ -293,11 +336,11 @@ const styles = StyleSheet.create({
   countText: { fontSize: 10, color: Colors.textMuted, fontWeight: '700' },
   countTextActive: { color: Colors.white },
 
-  catFilterRow: { marginBottom: 12 },
-  catFilterContent: { paddingHorizontal: Spacing.lg, gap: 8 },
+  catFilterRow: { marginBottom: 10 },
+  catFilterContent: { paddingHorizontal: Spacing.lg, gap: 6 },
   chip: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.surface,
     borderWidth: 1,
@@ -307,66 +350,60 @@ const styles = StyleSheet.create({
   chipText: { fontSize: FontSizes.sm, color: Colors.textSecondary, fontWeight: '600' },
   chipTextActive: { color: Colors.black },
 
-  list: { paddingHorizontal: Spacing.md, paddingBottom: 100 },
-  columnWrapper: { justifyContent: 'space-between', paddingHorizontal: 2 },
+  list: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
+  column: { justifyContent: 'space-between' },
   card: {
-    borderRadius: BorderRadius.md,
-    overflow: 'hidden',
-    margin: 6,
-    backgroundColor: Colors.card,
+    marginBottom: 14,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
+    overflow: 'hidden',
   },
-  cardImageContainer: {
+  gridCard: { flex: 0, width: '49%' },
+  cardImageWrap: {
     position: 'relative',
-    height: 120,
     width: '100%',
+    backgroundColor: 'transparent',
   },
-  cardImage: { width: '100%', height: '100%' },
-  dateBadge: {
-    position: 'absolute', top: Spacing.xs, left: Spacing.xs,
-    backgroundColor: Colors.background + 'EE', borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.xs, paddingVertical: 2,
-    alignItems: 'center',
+  cardImage: { width: '100%', backgroundColor: 'transparent' },
+  cardBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: Colors.gold,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
   },
-  dateBadgeDay: { fontSize: 9, color: Colors.gold, fontWeight: '700' },
-  dateBadgeDate: { fontSize: 9, color: Colors.white, fontWeight: '600' },
-  cardContent: { padding: Spacing.sm },
-  categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  categoryBadge: { borderRadius: BorderRadius.sm, paddingHorizontal: 4, paddingVertical: 2 },
-  categoryText: { fontSize: 9, fontWeight: '700' },
-  cardTime: { fontSize: 10, color: Colors.textSecondary },
-  cardName: { fontSize: FontSizes.md - 1, fontWeight: '700', color: Colors.white, marginBottom: 2, height: 32 },
-  cardVenue: { fontSize: FontSizes.xs, color: Colors.textSecondary, marginBottom: 4 },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardPrice: { fontSize: FontSizes.sm, fontWeight: '800', color: Colors.gold },
+  cardBadgeText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.black },
+  cardInfo: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 9, backgroundColor: Colors.black },
+  cardName: { fontSize: 15, fontWeight: '800', color: Colors.white, lineHeight: 18, marginBottom: 1 },
+  cardVenue: { fontSize: 12, color: Colors.textSecondary, marginBottom: 1 },
+  cardPrice: { fontSize: 12, fontWeight: '700', color: Colors.gold, marginBottom: 4 },
+  cardDesc: { fontSize: 11, color: Colors.textMuted, lineHeight: 15 },
   addScheduleBtn: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
   },
   addScheduleBtnActive: {
-    backgroundColor: Colors.green + '20',
+    backgroundColor: Colors.green + '15',
     borderColor: Colors.green + '40',
   },
-  bookmarkBtn: {
-    position: 'absolute',
-    top: Spacing.xs,
-    right: Spacing.xs,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.background + 'CC',
-    alignItems: 'center',
-    justifyContent: 'center',
+  addScheduleText: {
+    fontSize: FontSizes.xs,
+    color: Colors.textSecondary,
+    fontWeight: '600',
   },
-  bookmarkBtnActive: {
-    backgroundColor: Colors.gold + '30',
+  addScheduleTextActive: {
+    color: Colors.greenLight,
   },
   scheduleHeaderBtn: {
     width: 42,

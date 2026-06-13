@@ -5,9 +5,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useAppData } from '../lib/appState';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../convex/_generated/api';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
-import { EventItem } from '../lib/data';
+import { events, EventItem } from '../lib/data';
 
 function getImageSource(image: string | number) {
   return typeof image === 'string' ? { uri: image } : image;
@@ -34,12 +35,15 @@ type ScheduleSection = {
   event: EventItem;
 };
 
-export default function MyScheduleScreen({ navigation }: any) {
-  const { activeEvents, scheduleIds: savedEventIds, toggleEvent, clearSchedule } = useAppData();
+export default function MyScheduleScreen({ navigation, route }: any) {
+  const savedEventIds = useQuery(api.schedule.getMySchedule) ?? [];
+  const toggleEvent = useMutation(api.schedule.toggleEvent);
+  const clearSchedule = useMutation(api.schedule.clearSchedule);
+  const isTab = route?.name === 'MyItineraryTab';
 
   const savedEvents = useMemo(() => {
-    return activeEvents.filter(e => savedEventIds.includes(e.id));
-  }, [activeEvents, savedEventIds]);
+    return events.filter(e => savedEventIds.includes(e.id));
+  }, [savedEventIds]);
 
   const sections = useMemo(() => {
     const result: ScheduleSection[] = [];
@@ -118,7 +122,7 @@ export default function MyScheduleScreen({ navigation }: any) {
           <View style={styles.timelineLine} />
         </View>
         <View style={styles.eventContent}>
-          <Image source={getImageSource(event.image)} style={styles.eventImage} />
+          <Image source={getImageSource(event.image)} style={styles.eventImage} resizeMode="contain" />
           <View style={styles.eventDetails}>
             <View style={styles.eventTimeRow}>
               <Ionicons name="time-outline" size={12} color={Colors.gold} />
@@ -146,10 +150,12 @@ export default function MyScheduleScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={Colors.white} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
+        {!isTab ? (
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back" size={24} color={Colors.white} />
+          </TouchableOpacity>
+        ) : null}
+        <View style={[styles.headerCenter, isTab && { marginLeft: 0 }]}>
           <Text style={styles.headerTitle}>My Schedule</Text>
           <Text style={styles.headerSubtitle}>
             {savedEvents.length} event{savedEvents.length !== 1 ? 's' : ''} planned
@@ -173,7 +179,13 @@ export default function MyScheduleScreen({ navigation }: any) {
           </Text>
           <TouchableOpacity
             style={styles.browseBtn}
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              if (isTab) {
+                navigation.navigate('EventsTab');
+              } else {
+                navigation.goBack();
+              }
+            }}
           >
             <Ionicons name="search-outline" size={18} color={Colors.black} />
             <Text style={styles.browseBtnText}>Browse Events</Text>
@@ -275,7 +287,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder,
     overflow: 'hidden',
   },
-  eventImage: { width: 80, height: '100%', minHeight: 100 },
+  eventImage: { width: 80, height: '100%', minHeight: 100, objectFit: 'contain', backgroundColor: Colors.deepMaroon },
   eventDetails: { flex: 1, padding: Spacing.md },
   eventTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
   eventTime: { fontSize: FontSizes.xs, color: Colors.gold, fontWeight: '700' },

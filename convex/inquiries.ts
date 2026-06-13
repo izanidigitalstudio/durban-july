@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 export const createInquiry = mutation({
   args: {
@@ -14,10 +15,20 @@ export const createInquiry = mutation({
   },
   returns: v.id("inquiries"),
   handler: async (ctx, args) => {
-    return await ctx.db.insert("inquiries", {
+    const inquiryId = await ctx.db.insert("inquiries", {
       ...args,
       status: "pending",
     });
+    await ctx.scheduler.runAfter(0, internal.email.sendInquiryEmail, {
+      name: args.name,
+      email: args.email,
+      phone: args.phone,
+      itemType: args.itemType,
+      itemName: args.itemName,
+      guests: args.guests,
+      message: args.message,
+    });
+    return inquiryId;
   },
 });
 

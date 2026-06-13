@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
+import AdaptiveImage from '../components/AdaptiveImage';
 
 const conciergeServices = [
   {
@@ -97,7 +98,7 @@ export default function ConciergeScreen() {
       >
         {conciergeServices.map((service) => (
           <View key={service.id} style={styles.serviceCard}>
-            <Image source={{ uri: service.image }} style={styles.serviceImage} />
+            <AdaptiveImage source={{ uri: service.image }} style={styles.serviceImage} />
             <View style={styles.categoryBadge}>
               <Text style={styles.categoryText}>{service.category}</Text>
             </View>
@@ -158,13 +159,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   webContainer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    height: '100dvh',
-    maxHeight: '100dvh',
+    position: 'absolute', top: 0, right: 0, bottom: 0, left: 0,
+    height: '100dvh', maxHeight: '100dvh',
   } as any,
   header: {
     flexShrink: 0,
@@ -197,9 +193,7 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   webScroll: {
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    touchAction: 'pan-y',
+    overflowY: 'auto', overflowX: 'hidden', touchAction: 'pan-y',
     WebkitOverflowScrolling: 'touch',
   } as any,
   contentContainer: {
@@ -214,7 +208,7 @@ const styles = StyleSheet.create({
   },
   serviceImage: {
     width: '100%',
-    height: 200,
+    backgroundColor: 'transparent',
   },
   categoryBadge: {
     position: 'absolute',

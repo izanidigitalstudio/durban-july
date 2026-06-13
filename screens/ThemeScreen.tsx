@@ -94,6 +94,7 @@ export default function ThemeScreen() {
               uri: 'https://api.a0.dev/assets/image?text=light+skin+Black+African+woman+long+beautiful+hair+horse+beside+her+country+field+earth+tone+dress+elegant+fashion&aspect=16:9&seed=2642',
             }}
             style={styles.heroImage}
+            resizeMode="contain"
           />
           <View style={styles.heroOverlay}>
             <Text style={styles.heroLabel}>HOLLYWOODBETS DURBAN JULY 2026</Text>
@@ -249,6 +250,8 @@ const styles = StyleSheet.create({
   heroImage: {
     width: '100%',
     height: 220,
+    objectFit: 'contain',
+    backgroundColor: Colors.deepMaroon,
   },
   heroOverlay: {
     backgroundColor: Colors.card,

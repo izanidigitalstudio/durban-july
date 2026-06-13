@@ -5,8 +5,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuthActions } from '@convex-dev/auth/react';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
+import { useAuthActions } from '@convex-dev/auth/react';
 
 export default function AuthScreen({ navigation }: any) {
   const { signIn } = useAuthActions();
@@ -56,14 +56,7 @@ export default function AuthScreen({ navigation }: any) {
             keyboardShouldPersistTaps="handled"
           >
             {/* Header */}
-            <TouchableOpacity
-              style={styles.backBtn}
-              onPress={() => (
-                navigation.canGoBack()
-                  ? navigation.goBack()
-                  : navigation.navigate('Welcome')
-              )}
-            >
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
               <Ionicons name="chevron-back" size={24} color={Colors.white} />
             </TouchableOpacity>
 

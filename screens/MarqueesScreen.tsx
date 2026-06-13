@@ -4,9 +4,9 @@ import {
   Image, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { marquees, MarqueePackage } from '../lib/data';
+import AdaptiveImage from '../components/AdaptiveImage';
 import { useCatalogueColumns } from '../lib/responsive';
 
 const tiers = ['All', 'VIP', 'Ultra VIP'] as const;
@@ -14,6 +14,10 @@ type Tier = (typeof tiers)[number];
 
 function getImageSource(uri: string | number) {
   return typeof uri === 'string' ? { uri } : uri;
+}
+
+function getPrimaryMarqueeImage(item: MarqueePackage) {
+  return getImageSource(item.images?.[0] ?? item.image);
 }
 
 export default function MarqueesScreen({ navigation }: any) {
@@ -27,60 +31,65 @@ export default function MarqueesScreen({ navigation }: any) {
   const renderMarquee = (item: MarqueePackage) => (
     <TouchableOpacity
       key={item.id}
-      style={[styles.card, { flexBasis: numColumns === 3 ? '31%' : '48%' }]}
+      style={[styles.card, numColumns === 2 && styles.gridCard]}
       onPress={() => navigation.navigate('Detail', { type: 'marquee', id: item.id })}
       activeOpacity={0.85}
     >
       <View style={styles.cardImageWrap}>
-        <Image
-          source={getImageSource(item.image)}
-          style={[styles.cardImage, item.imageFit === 'contain' && styles.cardImageContain]}
-          resizeMode={item.imageFit ?? 'contain'}
+        <AdaptiveImage
+          source={getPrimaryMarqueeImage(item)}
+          style={styles.cardImage}
         />
-      </View>
-      <View style={styles.cardGradient} />
-      <View style={styles.cardBadge}>
-        <Text style={styles.cardBadgeText}>{item.tier}</Text>
-      </View>
-      <View style={styles.cardContent}>
-        <Text style={styles.cardName}>{item.name}</Text>
-        <Text style={styles.cardVenue}>
-          <Ionicons name="location-outline" size={12} color={Colors.textSecondary} /> {item.venue}
-        </Text>
-        <View style={styles.cardBottom}>
-          <Text style={styles.cardPrice}>{item.price}</Text>
-          {item.capacity && (
-            <Text style={styles.cardCapacity}>
-              <Ionicons name="people-outline" size={12} color={Colors.textSecondary} /> {item.capacity}
-            </Text>
-          )}
+        <View style={styles.cardImageShade} />
+        <View style={styles.cardBadge}>
+          <Text style={styles.cardBadgeText}>{item.tier}</Text>
         </View>
-        <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
+      </View>
+
+      <View style={styles.cardInfo}>
+        <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
+        <Text style={styles.cardVenue} numberOfLines={1}>{item.venue}</Text>
+
+        <View style={styles.cardMetaRow}>
+          <Text style={styles.cardPrice} numberOfLines={1}>{item.price}</Text>
+        </View>
+
+        <Text style={styles.cardDescription} numberOfLines={3}>{item.description}</Text>
+
+        <View style={styles.cardCta}>
+          <Text style={styles.cardCtaText}>View Package</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: Colors.background }}>
+      <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Hospitality Platforms</Text>
-          <Text style={styles.headerSub}>Durban July 2026 · Official marquee hospitality</Text>
+          <Text style={styles.kicker}>Book Hotel and Hospitality Packages</Text>
+          <Text style={styles.headerTitle}>2026 Hospitality Packages Released</Text>
+          <Text style={styles.headerSub}>Official marquee hospitality for Durban July 2026</Text>
         </View>
+
         <View style={styles.filterRow}>
           {tiers.map((item: Tier) => (
             <TouchableOpacity
               key={item}
               style={[styles.filterChip, selectedTier === item && styles.filterChipActive]}
               onPress={() => setSelectedTier(item)}
+              activeOpacity={0.85}
             >
               <Text style={[styles.filterText, selectedTier === item && styles.filterTextActive]}>{item}</Text>
             </TouchableOpacity>
           ))}
         </View>
       </SafeAreaView>
+
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-        {filtered.map(renderMarquee)}
+        <View style={[styles.cardGrid, numColumns === 2 && styles.cardGridDesktop]}>
+          {filtered.map(renderMarquee)}
+        </View>
       </ScrollView>
     </View>
   );
@@ -88,59 +97,140 @@ export default function MarqueesScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  header: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.md, paddingBottom: Spacing.sm },
-  headerTitle: { fontSize: FontSizes.xxl, fontWeight: '800', color: Colors.white },
-  headerSub: { fontSize: FontSizes.sm, color: Colors.gold, marginTop: 2 },
-  filterRow: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md, gap: Spacing.sm, flexDirection: 'row', flexWrap: 'wrap' },
-  filterChip: {
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full, backgroundColor: Colors.surface,
-    borderWidth: 1, borderColor: Colors.cardBorder,
+  safeArea: {
+    backgroundColor: Colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.cardBorder,
   },
-  filterChipActive: { backgroundColor: Colors.gold, borderColor: Colors.gold },
-  filterText: { fontSize: FontSizes.sm, color: Colors.textSecondary, fontWeight: '600' },
-  filterTextActive: { color: Colors.black },
-  list: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: 100,
+  header: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+  },
+  kicker: {
+    fontSize: FontSizes.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    color: Colors.goldLight,
+    fontWeight: '800',
+  },
+  headerTitle: {
+    fontSize: FontSizes.xxl,
+    fontWeight: '800',
+    color: Colors.white,
+    marginTop: 6,
+    lineHeight: 30,
+  },
+  headerSub: {
+    fontSize: FontSizes.md,
+    color: Colors.textSecondary,
+    marginTop: 8,
+    lineHeight: 21,
+  },
+  filterRow: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.md,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.lg,
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    marginRight: 8,
+    marginTop: 8,
+  },
+  filterChipActive: { backgroundColor: Colors.gold, borderColor: Colors.gold },
+  filterText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '700' },
+  filterTextActive: { color: Colors.black },
+  list: { paddingHorizontal: Spacing.xl, paddingTop: Spacing.md, paddingBottom: 100 },
+  cardGrid: { width: '100%' },
+  cardGridDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   card: {
-    flexGrow: 1,
-    borderRadius: BorderRadius.lg, overflow: 'hidden',
-    backgroundColor: Colors.card,
-    borderWidth: 1, borderColor: Colors.cardBorder,
-  },
-  cardImageWrap: {
     width: '100%',
-    height: 180,
-    backgroundColor: Colors.deepMaroon,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.deepMaroon,
+    backgroundColor: Colors.surface,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    marginBottom: 16,
     overflow: 'hidden',
+  },
+  gridCard: { width: '49%' },
+  cardImageWrap: {
+    position: 'relative',
+    width: '100%',
+    backgroundColor: 'transparent',
   },
   cardImage: {
     width: '100%',
-    height: '100%',
-    backgroundColor: Colors.deepMaroon,
+    backgroundColor: 'transparent',
   },
-  cardImageContain: {
-    backgroundColor: Colors.surface,
+  cardImageShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.08)',
   },
-  cardGradient: { position: 'absolute', top: 0, left: 0, right: 0, height: 180 },
   cardBadge: {
-    position: 'absolute', top: Spacing.md, right: Spacing.md,
-    backgroundColor: Colors.gold, borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md, paddingVertical: 4,
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: Colors.gold,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    zIndex: 2,
   },
-  cardBadgeText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.black },
-  cardContent: { padding: Spacing.lg },
-  cardName: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white, marginBottom: 4 },
-  cardVenue: { fontSize: FontSizes.sm, color: Colors.textSecondary, marginBottom: Spacing.sm },
-  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.sm },
-  cardPrice: { fontSize: FontSizes.lg, fontWeight: '800', color: Colors.gold },
-  cardCapacity: { fontSize: FontSizes.xs, color: Colors.textSecondary },
-  cardDesc: { fontSize: FontSizes.sm, color: Colors.textSecondary, lineHeight: 20 },
+  cardBadgeText: { fontSize: 12, fontWeight: '800', color: Colors.black },
+  cardInfo: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: 14,
+    paddingBottom: 16,
+    backgroundColor: Colors.black,
+  },
+  cardName: {
+    fontSize: FontSizes.xl,
+    fontWeight: '800',
+    color: Colors.white,
+    lineHeight: 26,
+  },
+  cardVenue: {
+    fontSize: FontSizes.sm,
+    color: Colors.goldLight,
+    marginTop: 4,
+  },
+  cardMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  cardPrice: {
+    fontSize: FontSizes.lg,
+    fontWeight: '800',
+    color: Colors.gold,
+  },
+  cardDescription: {
+    fontSize: FontSizes.sm,
+    color: Colors.textSecondary,
+    lineHeight: 19,
+    marginTop: 8,
+  },
+  cardCta: {
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.gold,
+  },
+  cardCtaText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.black,
+  },
 });

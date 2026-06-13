@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
+import AdaptiveImage from '../components/AdaptiveImage';
 import { useCatalogueColumns } from '../lib/responsive';
 
 type Activity = {
@@ -159,8 +160,8 @@ export default function DurbanActivitiesScreen() {
     : activities.filter((a) => a.category === selectedCategory);
 
   const renderActivity = ({ item }: { item: Activity }) => (
-    <View style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
+    <View style={[styles.card, numColumns === 2 && styles.gridCard]}>
+      <AdaptiveImage source={{ uri: item.image }} style={styles.cardImage} />
       <View style={styles.categoryBadge}>
         <Text style={styles.categoryBadgeText}>{item.category}</Text>
       </View>
@@ -258,10 +259,10 @@ export default function DurbanActivitiesScreen() {
       </ScrollView>
 
       <FlatList
-        key={numColumns}
+        key={`activities-${numColumns}`}
         data={filtered}
         numColumns={numColumns}
-        columnWrapperStyle={styles.column}
+        columnWrapperStyle={numColumns === 2 ? styles.column : undefined}
         keyExtractor={(item) => item.id}
         renderItem={renderActivity}
         contentContainerStyle={styles.list}
@@ -298,15 +299,15 @@ const styles = StyleSheet.create({
   chipTextActive: { color: Colors.black },
 
   list: { padding: Spacing.lg, paddingBottom: 100 },
-  column: { gap: Spacing.lg },
+  column: { justifyContent: 'space-between' },
 
   card: {
-    flex: 1,
     backgroundColor: Colors.card, borderRadius: BorderRadius.xl,
     borderWidth: 1, borderColor: Colors.cardBorder,
     marginBottom: Spacing.lg, overflow: 'hidden',
   },
-  cardImage: { width: '100%', height: 180 },
+  gridCard: { flex: 0, width: '49%' },
+  cardImage: { width: '100%', backgroundColor: 'transparent' },
   categoryBadge: {
     position: 'absolute', top: Spacing.md, left: Spacing.md,
     backgroundColor: Colors.charcoal + 'DD', borderRadius: BorderRadius.md,

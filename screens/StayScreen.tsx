@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { accommodation, accommodationTypes, AccommodationItem } from '../lib/data';
+import AdaptiveImage from '../components/AdaptiveImage';
 import { useCatalogueColumns } from '../lib/responsive';
 
 export default function StayScreen({ navigation }: any) {
@@ -33,11 +34,11 @@ export default function StayScreen({ navigation }: any) {
 
   const renderItem = ({ item }: { item: AccommodationItem }) => (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, numColumns === 2 && styles.gridCard]}
       onPress={() => navigation.navigate('Detail', { type: 'accommodation', id: item.id })}
       activeOpacity={0.85}
     >
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
+      <AdaptiveImage source={{ uri: item.image }} style={styles.cardImage} />
       <View style={styles.typeBadge}>
         <Text style={styles.typeBadgeText}>{item.type}</Text>
       </View>
@@ -121,10 +122,10 @@ export default function StayScreen({ navigation }: any) {
         </View>
       </SafeAreaView>
       <FlatList
-        key={numColumns}
+        key={`stays-${numColumns}`}
         data={filtered}
         numColumns={numColumns}
-        columnWrapperStyle={styles.column}
+        columnWrapperStyle={numColumns === 2 ? styles.column : undefined}
         keyExtractor={(item: AccommodationItem) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
@@ -176,14 +177,14 @@ const styles = StyleSheet.create({
   summaryValue: { fontSize: FontSizes.lg, fontWeight: '800', color: Colors.gold },
   summaryLabel: { fontSize: FontSizes.xs, color: Colors.textSecondary, marginTop: 4 },
   list: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
-  column: { gap: Spacing.lg },
+  column: { justifyContent: 'space-between' },
   card: {
-    flex: 1,
     borderRadius: BorderRadius.lg, overflow: 'hidden',
     marginBottom: Spacing.lg, backgroundColor: Colors.card,
     borderWidth: 1, borderColor: Colors.cardBorder,
   },
-  cardImage: { width: '100%', height: 180 },
+  gridCard: { flex: 0, width: '49%' },
+  cardImage: { width: '100%', backgroundColor: 'transparent' },
   typeBadge: {
     position: 'absolute', top: Spacing.md, right: Spacing.md,
     backgroundColor: Colors.green, borderRadius: BorderRadius.sm,

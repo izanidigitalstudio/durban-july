@@ -5,5 +5,5 @@ const DESKTOP_GRID_BREAKPOINT = 900;
 export function useCatalogueColumns() {
   const { width } = useWindowDimensions();
 
-  return width >= DESKTOP_GRID_BREAKPOINT ? 3 : 2;
+  return width >= DESKTOP_GRID_BREAKPOINT ? 2 : 1;
 }

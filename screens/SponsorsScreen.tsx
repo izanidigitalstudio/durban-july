@@ -75,7 +75,6 @@ const sponsors = [
 export default function SponsorsScreen({ navigation }: { navigation: any }) {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
-
   const openSponsorWebsite = async (website?: string) => {
     if (!website) {
       Alert.alert('Website unavailable', 'No sponsor website is available for this sponsor yet.');
@@ -164,23 +163,13 @@ export default function SponsorsScreen({ navigation }: { navigation: any }) {
 const styles = StyleSheet.create({
   container: { flex: 1, minHeight: 0, overflow: 'hidden', backgroundColor: Colors.background },
   webContainer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    height: '100dvh',
-    maxHeight: '100dvh',
+    position: 'absolute', top: 0, right: 0, bottom: 0, left: 0,
+    height: '100dvh', maxHeight: '100dvh',
   } as any,
-  safeHeader: {
-    flexShrink: 0,
-    backgroundColor: Colors.background,
-  },
+  safeHeader: { flexShrink: 0, backgroundColor: Colors.background },
   scroll: { flex: 1, minHeight: 0 },
   webScroll: {
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    touchAction: 'pan-y',
+    overflowY: 'auto', overflowX: 'hidden', touchAction: 'pan-y',
     WebkitOverflowScrolling: 'touch',
   } as any,
   header: {
@@ -263,10 +252,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxl,
     gap: Spacing.md,
   },
-  contentDesktop: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
+  contentDesktop: { flexDirection: 'row', flexWrap: 'wrap' },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -282,10 +268,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 3,
   },
-  cardDesktop: {
-    flexBasis: '31%',
-    flexGrow: 1,
-  },
+  cardDesktop: { flexBasis: '31%', flexGrow: 1 },
   logoWrap: {
     width: 88,
     height: 88,
@@ -300,6 +283,7 @@ const styles = StyleSheet.create({
   logo: {
     width: '82%',
     height: '82%',
+    objectFit: 'contain',
   },
   cardText: {
     flex: 1,

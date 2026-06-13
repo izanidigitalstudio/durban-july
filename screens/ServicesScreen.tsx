@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  Image, Platform,
+  Image, ScrollView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { transport, conciergeServices, TransportItem, ConciergeService } from '../lib/data';
+import AdaptiveImage from '../components/AdaptiveImage';
 import { useCatalogueColumns } from '../lib/responsive';
 
 type Tab = 'transport' | 'concierge';
@@ -17,11 +18,11 @@ export default function ServicesScreen({ navigation }: any) {
 
   const renderTransport = ({ item }: { item: TransportItem }) => (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, numColumns === 2 && styles.gridCard]}
       onPress={() => navigation.navigate('Inquiry', { type: 'transport', id: item.id, name: item.name })}
       activeOpacity={0.85}
     >
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
+      <AdaptiveImage source={{ uri: item.image }} style={styles.cardImage} />
       <View style={styles.transportBadge}>
         <Ionicons
           name={item.type === 'Shuttle' ? 'bus-outline' : item.type === 'Chauffeur' ? 'car-sport-outline' : item.type === 'Helicopter' ? 'airplane-outline' : 'speedometer-outline'}
@@ -54,11 +55,11 @@ export default function ServicesScreen({ navigation }: any) {
 
   const renderConcierge = ({ item }: { item: ConciergeService }) => (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, numColumns === 2 && styles.gridCard]}
       onPress={() => navigation.navigate('Inquiry', { type: 'concierge', id: item.id, name: item.name })}
       activeOpacity={0.85}
     >
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
+      <AdaptiveImage source={{ uri: item.image }} style={styles.cardImage} />
       <View style={styles.conciergeBadge}>
         <Text style={styles.conciergeBadgeText}>{item.category}</Text>
       </View>
@@ -118,7 +119,7 @@ export default function ServicesScreen({ navigation }: any) {
           key={`transport-${numColumns}`}
           data={transport}
           numColumns={numColumns}
-          columnWrapperStyle={styles.column}
+          columnWrapperStyle={numColumns === 2 ? styles.column : undefined}
           keyExtractor={(item) => item.id}
           renderItem={renderTransport}
           contentContainerStyle={styles.list}
@@ -131,7 +132,7 @@ export default function ServicesScreen({ navigation }: any) {
           key={`concierge-${numColumns}`}
           data={conciergeServices}
           numColumns={numColumns}
-          columnWrapperStyle={styles.column}
+          columnWrapperStyle={numColumns === 2 ? styles.column : undefined}
           keyExtractor={(item) => item.id}
           renderItem={renderConcierge}
           contentContainerStyle={styles.list}
@@ -147,23 +148,13 @@ export default function ServicesScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, minHeight: 0, overflow: 'hidden', backgroundColor: Colors.background },
   webContainer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    height: '100dvh',
-    maxHeight: '100dvh',
+    position: 'absolute', top: 0, right: 0, bottom: 0, left: 0,
+    height: '100dvh', maxHeight: '100dvh',
   } as any,
-  safeHeader: {
-    flexShrink: 0,
-    backgroundColor: Colors.background,
-  },
+  safeHeader: { flexShrink: 0, backgroundColor: Colors.background },
   serviceList: { flex: 1, minHeight: 0 },
   webList: {
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    touchAction: 'pan-y',
+    overflowY: 'auto', overflowX: 'hidden', touchAction: 'pan-y',
     WebkitOverflowScrolling: 'touch',
   } as any,
   header: {
@@ -191,14 +182,14 @@ const styles = StyleSheet.create({
   tabText: { fontSize: FontSizes.md, color: Colors.textSecondary, fontWeight: '600' },
   tabTextActive: { color: Colors.gold },
   list: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
-  column: { gap: Spacing.lg },
+  column: { justifyContent: 'space-between' },
   card: {
-    flex: 1,
     borderRadius: BorderRadius.lg, overflow: 'hidden',
     marginBottom: Spacing.lg, backgroundColor: Colors.card,
     borderWidth: 1, borderColor: Colors.cardBorder,
   },
-  cardImage: { width: '100%', height: 170 },
+  gridCard: { flex: 0, width: '49%' },
+  cardImage: { width: '100%', backgroundColor: 'transparent' },
   transportBadge: {
     position: 'absolute', top: Spacing.md, left: Spacing.md,
     backgroundColor: Colors.background + 'EE', borderRadius: BorderRadius.sm,

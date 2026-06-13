@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { fashionStores } from '../lib/fashionData';
+import AdaptiveImage from '../components/AdaptiveImage';
 import { useCatalogueColumns } from '../lib/responsive';
 
 export default function ShoppingScreen() {
@@ -45,8 +46,8 @@ export default function ShoppingScreen() {
   };
 
   const renderStoreCard = ({ item }: { item: (typeof fashionStores)[number] }) => (
-    <TouchableOpacity style={styles.storeCard}>
-      <Image source={{ uri: item.image }} style={styles.storeImage} />
+    <TouchableOpacity style={[styles.storeCard, numColumns === 2 && styles.gridCard]}>
+      <AdaptiveImage source={{ uri: item.image }} style={styles.storeImage} />
       <View style={styles.categoryBadge}>
         <Text style={styles.categoryText}>{item.category}</Text>
       </View>
@@ -164,10 +165,10 @@ export default function ShoppingScreen() {
       </ScrollView>
 
       <FlatList
-        key={numColumns}
+        key={`shopping-${numColumns}`}
         data={filteredStores}
         numColumns={numColumns}
-        columnWrapperStyle={styles.column}
+        columnWrapperStyle={numColumns === 2 ? styles.column : undefined}
         renderItem={renderStoreCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
@@ -249,20 +250,17 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     gap: Spacing.md,
   },
-  column: {
-    gap: Spacing.md,
-  },
+  column: { justifyContent: 'space-between' },
   storeCard: {
-    flex: 1,
     borderRadius: BorderRadius.lg,
     backgroundColor: Colors.card,
     overflow: 'hidden',
     marginBottom: Spacing.md,
   },
+  gridCard: { flex: 0, width: '49%' },
   storeImage: {
     width: '100%',
-    height: 200,
-    backgroundColor: Colors.cardBorder,
+    backgroundColor: 'transparent',
   },
   categoryBadge: {
     position: 'absolute',

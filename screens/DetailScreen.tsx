@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Linking, Alert, Platform, useWindowDimensions,
+  Image, Dimensions, Linking, Alert, Platform,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useAppData } from '../lib/appState';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../convex/_generated/api';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
-import { marquees, accommodation } from '../lib/data';
+import { marquees, events, accommodation } from '../lib/data';
+
+const { width } = Dimensions.get('window');
+const heroWidth = width - (Spacing.lg * 2);
+const heroSlideWidth = heroWidth - 22;
 
 function getImageSource(uri: string | number) {
   return typeof uri === 'string' ? { uri } : uri;
@@ -16,11 +21,10 @@ function getImageSource(uri: string | number) {
 export default function DetailScreen({ route, navigation }: any) {
   const { type, id } = route.params;
   const [heroIndex, setHeroIndex] = useState(0);
-  const { width } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  const heroSlideWidth = Math.max(260, width - (Spacing.lg * 2) - 22);
+  const [heroAspectRatio, setHeroAspectRatio] = useState(16 / 9);
 
-  const { activeEvents, scheduleIds: savedEventIds, toggleEvent } = useAppData();
+  const savedEventIds = useQuery(api.schedule.getMySchedule) ?? [];
+  const toggleEvent = useMutation(api.schedule.toggleEvent);
   const isSaved = type === 'event' && savedEventIds.includes(id);
 
   const handleToggleSchedule = async () => {
@@ -33,8 +37,37 @@ export default function DetailScreen({ route, navigation }: any) {
 
   let item: any = null;
   if (type === 'marquee') item = marquees.find(m => m.id === id);
-  else if (type === 'event') item = activeEvents.find(e => e.id === id);
+  else if (type === 'event') item = events.find(e => e.id === id);
   else if (type === 'accommodation') item = accommodation.find(a => a.id === id);
+
+  const heroImages = (Array.isArray(item?.images) && item.images.length
+    ? item.images.filter((uri: string | number) => Boolean(uri))
+    : item?.image
+      ? [item.image]
+      : []).slice(0, type === 'marquee' ? 10 : undefined);
+  const activeHeroImage = heroImages[heroIndex];
+
+  useEffect(() => {
+    if (!activeHeroImage) {
+      setHeroAspectRatio(16 / 9);
+      return;
+    }
+
+    if (typeof activeHeroImage === 'number') {
+      setHeroAspectRatio(16 / 9);
+      return;
+    }
+
+    Image.getSize(
+      activeHeroImage,
+      (imageWidth, imageHeight) => {
+        if (imageWidth > 0 && imageHeight > 0) {
+          setHeroAspectRatio(imageWidth / imageHeight);
+        }
+      },
+      () => setHeroAspectRatio(16 / 9),
+    );
+  }, [activeHeroImage]);
 
   if (!item) return (
     <View style={styles.container}>
@@ -46,16 +79,12 @@ export default function DetailScreen({ route, navigation }: any) {
   const isEvent = type === 'event';
   const isAccom = type === 'accommodation';
 
-  const heroImages = (Array.isArray(item.images) && item.images.length
-    ? item.images.filter((uri: string | number) => Boolean(uri))
-    : item.image
-      ? [item.image]
-      : []).slice(0, isMarquee ? 10 : undefined);
-
   const marqueePackages = isMarquee ? item.packageOptions ?? [] : [];
+  const eventPackages = isEvent ? item.packageOptions ?? [] : [];
   const hasMultipleHeroImages = heroImages.length > 1;
   const heroCountLabel = heroImages.length ? `${heroIndex + 1}/${heroImages.length}` : '';
   const marqueePackageTitle = isMarquee && marqueePackages.length ? 'Marquee Packages' : null;
+  const eventPackageTitle = isEvent && eventPackages.length ? 'Packages' : null;
 
   const handleHeroScroll = (event: any) => {
     const nextIndex = Math.round(event.nativeEvent.contentOffset.x / heroSlideWidth);
@@ -66,46 +95,38 @@ export default function DetailScreen({ route, navigation }: any) {
     <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
       <ScrollView
         style={[styles.scrollView, Platform.OS === 'web' && styles.webScrollView]}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 112 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
       >
         {/* Hero */}
         <View style={styles.heroContainer}>
-          <View style={styles.heroFrame}>
-            {hasMultipleHeroImages ? (
+          <View
+            style={[
+              styles.heroFrame,
+              { height: ((heroSlideWidth - 20) / heroAspectRatio) + 20 },
+            ]}
+          >
+            {heroImages.length > 0 ? (
               <ScrollView
                 horizontal
                 pagingEnabled
-                directionalLockEnabled
-                nestedScrollEnabled
                 decelerationRate="fast"
                 snapToInterval={heroSlideWidth}
                 snapToAlignment="start"
                 showsHorizontalScrollIndicator={false}
                 onMomentumScrollEnd={handleHeroScroll}
                 scrollEventThrottle={16}
-                style={[styles.heroCarousel, Platform.OS === 'web' && styles.webHeroCarousel]}
+                style={styles.heroCarousel}
                 contentContainerStyle={styles.heroCarouselContent}
               >
-                {heroImages.map((uri: string | number, index: number) => (
-                  <View key={`${String(uri)}-${index}`} style={[styles.heroSlide, { width: heroSlideWidth }]}>
+                {heroImages.map((uri: string, index: number) => (
+                  <View key={`${String(uri)}-${index}`} style={styles.heroSlide}>
                     <View style={styles.heroImageShell}>
                       <Image source={getImageSource(uri)} style={styles.heroImage} resizeMode="contain" />
                     </View>
                   </View>
                 ))}
               </ScrollView>
-            ) : heroImages.length === 1 ? (
-              <View style={styles.singleHeroSlide}>
-                <View style={styles.heroImageShell}>
-                  <Image
-                    source={getImageSource(heroImages[0])}
-                    style={styles.heroImage}
-                    resizeMode="contain"
-                  />
-                </View>
-              </View>
             ) : (
               <View style={styles.heroEmptyState}>
                 <Ionicons name="image-outline" size={36} color={Colors.textMuted} />
@@ -264,10 +285,32 @@ export default function DetailScreen({ route, navigation }: any) {
           </View>
         ) : null}
 
+        {isEvent && eventPackages.length ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{eventPackageTitle}</Text>
+            {eventPackages.map((pkg: any, index: number) => (
+              <View key={`${pkg.name}-${index}`} style={styles.packageCard}>
+                <View style={styles.packageHeader}>
+                  <Text style={styles.packageName}>{pkg.name}</Text>
+                  <Text style={styles.packagePrice}>{pkg.price}</Text>
+                </View>
+                <View style={styles.packageFeatureList}>
+                  {pkg.highlights.map((feature: string, i: number) => (
+                    <View key={`${feature}-${i}`} style={styles.featureRow}>
+                      <Ionicons name="checkmark-circle" size={18} color={Colors.green} />
+                      <Text style={styles.featureText}>{feature}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {/* Includes / Highlights / Amenities */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            {isMarquee ? 'What\'s Included' : isEvent ? 'Highlights' : 'Amenities'}
+            {isMarquee ? 'What\'s Included' : isEvent ? 'Event Details' : 'Amenities'}
           </Text>
           {(isMarquee ? item.includes : isEvent ? item.highlights : item.amenities).map((f: string, i: number) => (
             <View key={i} style={styles.featureRow}>
@@ -289,6 +332,7 @@ export default function DetailScreen({ route, navigation }: any) {
           </View>
         )}
 
+        <View style={{ height: 120 }} />
       </ScrollView>
 
       {/* Bottom CTA */}
@@ -330,44 +374,28 @@ export default function DetailScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, minHeight: 0, overflow: 'hidden', backgroundColor: Colors.background },
   webContainer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    height: '100dvh',
-    maxHeight: '100dvh',
+    position: 'absolute', top: 0, right: 0, bottom: 0, left: 0,
+    height: '100dvh', maxHeight: '100dvh',
   } as any,
   scrollView: { flex: 1, minHeight: 0 },
   webScrollView: {
-    height: '100%',
-    maxHeight: '100%',
-    overflowY: 'auto',
-    overflowX: 'hidden',
-    touchAction: 'pan-y',
+    overflowY: 'auto', overflowX: 'hidden', touchAction: 'pan-y',
     WebkitOverflowScrolling: 'touch',
   } as any,
-  scrollContent: { flexGrow: 1 },
   errorText: { color: Colors.white, fontSize: FontSizes.lg, padding: Spacing.xl },
   heroContainer: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xxxl * 1.5, paddingBottom: Spacing.md },
   heroFrame: {
-    height: 190,
     position: 'relative',
-    backgroundColor: Colors.surface,
+    backgroundColor: 'transparent',
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.cardBorder,
   },
   heroCarousel: { flex: 1 },
-  webHeroCarousel: { touchAction: 'pan-x' } as any,
   heroCarouselContent: { alignItems: 'stretch' },
-  singleHeroSlide: {
-    flex: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
   heroSlide: {
+    width: heroSlideWidth,
     height: '100%',
     paddingHorizontal: 10,
     paddingVertical: 10,
@@ -376,14 +404,15 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
-    backgroundColor: Colors.deepMaroon,
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: Colors.cardBorder,
   },
   heroImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: Colors.deepMaroon,
+    backgroundColor: 'transparent',
+    objectFit: 'contain',
   },
   heroEmptyState: {
     flex: 1,
