@@ -8,9 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { useAuthActions } from '@convex-dev/auth/react';
 
-export default function AuthScreen({ navigation }: any) {
+export default function AuthScreen({ navigation, route }: any) {
   const { signIn } = useAuthActions();
-  const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
+  const [mode, setMode] = useState<'signIn' | 'signUp'>(
+    route?.params?.initialMode === 'signUp' ? 'signUp' : 'signIn',
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -51,6 +53,7 @@ export default function AuthScreen({ navigation }: any) {
           style={styles.keyboardView}
         >
           <ScrollView
+            style={[styles.scrollView, Platform.OS === 'web' && styles.webScroll]}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
@@ -161,6 +164,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   safeArea: { flex: 1 },
   keyboardView: { flex: 1 },
+  scrollView: { flex: 1 },
+  webScroll: {
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    touchAction: 'pan-y',
+    WebkitOverflowScrolling: 'touch',
+  } as any,
   scrollContent: { padding: Spacing.xxl, flexGrow: 1 },
   backBtn: {
     width: 40, height: 40, borderRadius: 20,

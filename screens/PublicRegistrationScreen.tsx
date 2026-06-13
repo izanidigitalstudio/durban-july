@@ -103,7 +103,12 @@ export default function PublicRegistrationScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          style={[styles.scrollView, Platform.OS === 'web' && styles.webScroll]}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
             <Ionicons name="chevron-back" size={24} color={Colors.white} />
           </TouchableOpacity>
@@ -200,6 +205,13 @@ function Field({ label, multiline, ...props }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   flex: { flex: 1 },
+  scrollView: { flex: 1 },
+  webScroll: {
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    touchAction: 'pan-y',
+    WebkitOverflowScrolling: 'touch',
+  } as any,
   content: { padding: Spacing.xl, paddingBottom: Spacing.xxxl },
   backBtn: {
     width: 40,
