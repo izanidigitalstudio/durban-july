@@ -55,27 +55,32 @@ export default function InquiryScreen({ route, navigation }: any) {
   if (submitted) {
     return (
       <View style={styles.container}>
-        <SafeAreaView style={styles.successContainer}>
-          <View style={styles.successIcon}>
-            <Ionicons name="checkmark-circle" size={80} color={Colors.green} />
-          </View>
-          <Text style={styles.successTitle}>Enquiry Submitted</Text>
-          <Text style={styles.successDesc}>
-            Thank you for your interest in {name}. Our VIP concierge team will contact you within 24 hours to confirm availability and arrange your booking.
-          </Text>
-          <View style={styles.successInfo}>
-            <View style={styles.successInfoRow}>
-              <Ionicons name="mail-outline" size={16} color={Colors.gold} />
-              <Text style={styles.successInfoText}>Confirmation sent to {form.email}</Text>
+        <SafeAreaView style={styles.successSafeArea}>
+          <ScrollView
+            style={[styles.scrollView, Platform.OS === 'web' && styles.webScroll]}
+            contentContainerStyle={styles.successContainer}
+          >
+            <View style={styles.successIcon}>
+              <Ionicons name="checkmark-circle" size={80} color={Colors.green} />
             </View>
-            <View style={styles.successInfoRow}>
-              <Ionicons name="call-outline" size={16} color={Colors.gold} />
-              <Text style={styles.successInfoText}>We'll call you on {form.phone}</Text>
+            <Text style={styles.successTitle}>Enquiry Submitted</Text>
+            <Text style={styles.successDesc}>
+              Thank you for your interest in {name}. Our VIP concierge team will contact you within 24 hours to confirm availability and arrange your booking.
+            </Text>
+            <View style={styles.successInfo}>
+              <View style={styles.successInfoRow}>
+                <Ionicons name="mail-outline" size={16} color={Colors.gold} />
+                <Text style={styles.successInfoText}>Confirmation sent to {form.email}</Text>
+              </View>
+              <View style={styles.successInfoRow}>
+                <Ionicons name="call-outline" size={16} color={Colors.gold} />
+                <Text style={styles.successInfoText}>We'll call you on {form.phone}</Text>
+              </View>
             </View>
-          </View>
-          <TouchableOpacity style={styles.doneButton} onPress={() => navigation.popToTop()}>
-            <Text style={styles.doneButtonText}>Back to Home</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.doneButton} onPress={() => navigation.popToTop()}>
+              <Text style={styles.doneButtonText}>Back to Home</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </SafeAreaView>
       </View>
     );
@@ -83,7 +88,7 @@ export default function InquiryScreen({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: Colors.background }}>
+      <SafeAreaView edges={['top']} style={styles.safeHeader}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={24} color={Colors.white} />
@@ -92,8 +97,17 @@ export default function InquiryScreen({ route, navigation }: any) {
           <View style={{ width: 40 }} />
         </View>
       </SafeAreaView>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView
+          style={[styles.scrollView, Platform.OS === 'web' && styles.webScroll]}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
+        >
           {/* Item info */}
           <View style={styles.itemCard}>
             <View style={styles.itemBadge}>
@@ -184,18 +198,39 @@ export default function InquiryScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: Colors.background,
+    minWidth: 0,
+    minHeight: 0,
+    overflow: 'hidden',
+  },
+  safeHeader: { backgroundColor: Colors.background, flexShrink: 0 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white },
-  content: { paddingHorizontal: Spacing.xl },
+  keyboardView: { flex: 1, minWidth: 0, minHeight: 0, width: '100%' },
+  scrollView: { flex: 1, minWidth: 0, minHeight: 0, width: '100%' },
+  webScroll: {
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    touchAction: 'pan-y',
+    WebkitOverflowScrolling: 'touch',
+  } as any,
+  content: {
+    width: '100%',
+    minWidth: 0,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xxxl,
+  },
   itemCard: {
     backgroundColor: Colors.surface, borderRadius: BorderRadius.lg,
     padding: Spacing.lg, borderWidth: 1, borderColor: Colors.cardBorder,
     marginBottom: Spacing.xxl,
+    width: '100%', minWidth: 0,
   },
   itemBadge: {
     alignSelf: 'flex-start', backgroundColor: Colors.gold,
@@ -203,16 +238,20 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   itemBadgeText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.black },
-  itemName: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white },
-  formSection: { marginBottom: Spacing.xxl },
+  itemName: {
+    fontSize: FontSizes.lg, fontWeight: '700', color: Colors.white,
+    flexShrink: 1, flexWrap: 'wrap',
+  },
+  formSection: { marginBottom: Spacing.xxl, width: '100%', minWidth: 0 },
   formLabel: { fontSize: FontSizes.sm, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm, marginTop: Spacing.lg },
   input: {
     backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
     fontSize: FontSizes.md, color: Colors.white,
     borderWidth: 1, borderColor: Colors.cardBorder,
+    width: '100%', minWidth: 0,
   },
-  textArea: { height: 100, paddingTop: Spacing.md },
+  textArea: { minHeight: 120, paddingTop: Spacing.md },
   submitButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm,
     backgroundColor: Colors.gold, borderRadius: BorderRadius.md,
@@ -221,7 +260,11 @@ const styles = StyleSheet.create({
   submitButtonDisabled: { opacity: 0.6 },
   submitButtonText: { fontSize: FontSizes.lg, fontWeight: '700', color: Colors.black },
   disclaimer: { fontSize: FontSizes.xs, color: Colors.textMuted, textAlign: 'center', lineHeight: 18 },
-  successContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xxxl },
+  successSafeArea: { flex: 1, minHeight: 0, minWidth: 0 },
+  successContainer: {
+    flexGrow: 1, justifyContent: 'center', alignItems: 'center',
+    padding: Spacing.xxxl, width: '100%', minWidth: 0,
+  },
   successIcon: { marginBottom: Spacing.xxl },
   successTitle: { fontSize: FontSizes.xxl, fontWeight: '800', color: Colors.white, marginBottom: Spacing.md },
   successDesc: { fontSize: FontSizes.md, color: Colors.textSecondary, textAlign: 'center', lineHeight: 24, marginBottom: Spacing.xxl },
@@ -231,7 +274,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.cardBorder, marginBottom: Spacing.xxl,
   },
   successInfoRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  successInfoText: { fontSize: FontSizes.sm, color: Colors.textSecondary },
+  successInfoText: { flex: 1, minWidth: 0, fontSize: FontSizes.sm, color: Colors.textSecondary },
   doneButton: {
     backgroundColor: Colors.gold, borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.xxxl, paddingVertical: Spacing.lg,

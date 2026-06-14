@@ -21,15 +21,21 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
       min-height: 100%;
       min-height: 100dvh;
       height: 100dvh;
-      max-width: none;
+      max-width: 100%;
       margin: 0;
       background: #0B0B0F;
       overscroll-behavior: none;
+      overflow-x: hidden;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
     }
 
     body {
       position: fixed;
       inset: 0;
+      overscroll-behavior-x: none;
     }
 
     #root {

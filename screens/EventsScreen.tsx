@@ -92,7 +92,7 @@ export default function EventsScreen({ navigation }: any) {
           </View>
         </View>
         <View style={styles.cardInfo}>
-          <Text style={styles.cardName} numberOfLines={2}>{cardTitle}</Text>
+          <Text style={styles.cardName}>{cardTitle}</Text>
           <Text style={styles.cardVenue} numberOfLines={1}>
             <Ionicons name="location-outline" size={13} color={Colors.textSecondary} /> {item.venue}, {item.location}
           </Text>
@@ -256,7 +256,13 @@ function getCategoryTextColor(cat: string) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    width: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
   header: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.sm,
@@ -359,7 +365,7 @@ const styles = StyleSheet.create({
     WebkitOverflowScrolling: 'touch',
   } as any,
   list: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
-  cardGrid: { width: '100%' },
+  cardGrid: { width: '100%', minWidth: 0 },
   cardGridDesktop: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -372,6 +378,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.cardBorder,
     overflow: 'hidden',
+    minWidth: 0,
   },
   gridCard: { width: '49%' },
   cardImageWrap: {
@@ -390,8 +397,25 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   cardBadgeText: { fontSize: FontSizes.xs, fontWeight: '700', color: Colors.black },
-  cardInfo: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 9, backgroundColor: Colors.black },
-  cardName: { fontSize: 15, fontWeight: '800', color: Colors.white, lineHeight: 18, marginBottom: 1 },
+  cardInfo: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 9,
+    backgroundColor: Colors.black,
+    width: '100%',
+    minWidth: 0,
+  },
+  cardName: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: Colors.white,
+    lineHeight: 18,
+    marginBottom: 1,
+    width: '100%',
+    minWidth: 0,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+  },
   cardVenue: { fontSize: 12, color: Colors.textSecondary, marginBottom: 1 },
   cardPrice: { fontSize: 12, fontWeight: '700', color: Colors.gold, marginBottom: 4 },
   cardDesc: { fontSize: 11, color: Colors.textMuted, lineHeight: 15 },
