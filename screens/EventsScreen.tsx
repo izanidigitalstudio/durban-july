@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity,
-  Image, ScrollView, Pressable, Alert, TextInput,
+  View, Text, StyleSheet, TouchableOpacity,
+  ScrollView, Pressable, Alert, TextInput, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -77,6 +77,7 @@ export default function EventsScreen({ navigation }: any) {
     const cardTitle = item.name.replace(/^Demo:\s*/, '');
     return (
       <TouchableOpacity
+        key={item.id}
         style={[styles.card, numColumns === 2 && styles.gridCard]}
         onPress={() => navigation.navigate('Detail', { type: 'event', id: item.id })}
         activeOpacity={0.85}
@@ -206,24 +207,24 @@ export default function EventsScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        key={`events-${numColumns}`}
-        data={filtered as EventItem[]}
-        numColumns={numColumns}
-        columnWrapperStyle={numColumns === 2 ? styles.column : undefined}
-        keyExtractor={(item: EventItem) => item.id}
-        renderItem={renderEvent}
-        ListHeaderComponent={ListHeader}
+      <ScrollView
+        style={[styles.eventScroll, Platform.OS === 'web' && styles.webScroll]}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
+      >
+        <ListHeader />
+        {filtered.length > 0 ? (
+          <View style={[styles.cardGrid, numColumns === 2 && styles.cardGridDesktop]}>
+            {filtered.map((item) => renderEvent({ item }))}
+          </View>
+        ) : (
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={48} color={Colors.textMuted} />
             <Text style={styles.emptyText}>No events for this selection</Text>
             <Text style={styles.emptySubText}>Try a different day, category, or search term</Text>
           </View>
-        }
-      />
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -350,8 +351,20 @@ const styles = StyleSheet.create({
   chipText: { fontSize: FontSizes.sm, color: Colors.textSecondary, fontWeight: '600' },
   chipTextActive: { color: Colors.black },
 
+  eventScroll: { flex: 1, minHeight: 0 },
+  webScroll: {
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    touchAction: 'pan-y',
+    WebkitOverflowScrolling: 'touch',
+  } as any,
   list: { paddingHorizontal: Spacing.lg, paddingBottom: 100 },
-  column: { justifyContent: 'space-between' },
+  cardGrid: { width: '100%' },
+  cardGridDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
   card: {
     marginBottom: 14,
     backgroundColor: Colors.surface,
@@ -360,7 +373,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder,
     overflow: 'hidden',
   },
-  gridCard: { flex: 0, width: '49%' },
+  gridCard: { width: '49%' },
   cardImageWrap: {
     position: 'relative',
     width: '100%',

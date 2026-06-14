@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Dimensions, Linking, Alert, Platform,
+  Image, Linking, Alert, Platform, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,15 +10,12 @@ import { api } from '../convex/_generated/api';
 import { Colors, Spacing, FontSizes, BorderRadius } from '../lib/theme';
 import { marquees, events, accommodation } from '../lib/data';
 
-const { width } = Dimensions.get('window');
-const heroWidth = width - (Spacing.lg * 2);
-const heroSlideWidth = heroWidth - 22;
-
 function getImageSource(uri: string | number) {
   return typeof uri === 'string' ? { uri } : uri;
 }
 
 export default function DetailScreen({ route, navigation }: any) {
+  const { width } = useWindowDimensions();
   const { type, id } = route.params;
   const [heroIndex, setHeroIndex] = useState(0);
   const [heroAspectRatio, setHeroAspectRatio] = useState(16 / 9);
@@ -85,6 +82,8 @@ export default function DetailScreen({ route, navigation }: any) {
   const heroCountLabel = heroImages.length ? `${heroIndex + 1}/${heroImages.length}` : '';
   const marqueePackageTitle = isMarquee && marqueePackages.length ? 'Marquee Packages' : null;
   const eventPackageTitle = isEvent && eventPackages.length ? 'Packages' : null;
+  const heroWidth = Math.max(280, width - (Spacing.lg * 2));
+  const heroSlideWidth = heroWidth - 22;
 
   const handleHeroScroll = (event: any) => {
     const nextIndex = Math.round(event.nativeEvent.contentOffset.x / heroSlideWidth);
@@ -92,11 +91,14 @@ export default function DetailScreen({ route, navigation }: any) {
   };
 
   return (
-    <View style={[styles.container, Platform.OS === 'web' && styles.webContainer]}>
+    <View style={styles.container}>
       <ScrollView
         style={[styles.scrollView, Platform.OS === 'web' && styles.webScrollView]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        nestedScrollEnabled
+        scrollEnabled
+        nestedScrollEnabled={false}
+        bounces={false}
       >
         {/* Hero */}
         <View style={styles.heroContainer}>
@@ -120,7 +122,10 @@ export default function DetailScreen({ route, navigation }: any) {
                 contentContainerStyle={styles.heroCarouselContent}
               >
                 {heroImages.map((uri: string, index: number) => (
-                  <View key={`${String(uri)}-${index}`} style={styles.heroSlide}>
+                  <View
+                    key={`${String(uri)}-${index}`}
+                    style={[styles.heroSlide, { width: heroSlideWidth }]}
+                  >
                     <View style={styles.heroImageShell}>
                       <Image source={getImageSource(uri)} style={styles.heroImage} resizeMode="contain" />
                     </View>
@@ -332,7 +337,6 @@ export default function DetailScreen({ route, navigation }: any) {
           </View>
         )}
 
-        <View style={{ height: 120 }} />
       </ScrollView>
 
       {/* Bottom CTA */}
@@ -372,12 +376,14 @@ export default function DetailScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, minHeight: 0, overflow: 'hidden', backgroundColor: Colors.background },
-  webContainer: {
-    position: 'absolute', top: 0, right: 0, bottom: 0, left: 0,
-    height: '100dvh', maxHeight: '100dvh',
-  } as any,
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    minHeight: 0,
+    overflow: 'hidden',
+    backgroundColor: Colors.background,
+  },
   scrollView: { flex: 1, minHeight: 0 },
+  scrollContent: { paddingBottom: 150 },
   webScrollView: {
     overflowY: 'auto', overflowX: 'hidden', touchAction: 'pan-y',
     WebkitOverflowScrolling: 'touch',
@@ -395,7 +401,6 @@ const styles = StyleSheet.create({
   heroCarousel: { flex: 1 },
   heroCarouselContent: { alignItems: 'stretch' },
   heroSlide: {
-    width: heroSlideWidth,
     height: '100%',
     paddingHorizontal: 10,
     paddingVertical: 10,
